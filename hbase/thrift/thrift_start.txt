@@ -1,0 +1,17 @@
+thrift服务
+hbase本身已经集成了thrift，使用以下命令开启hbase thrift的服务器端。关闭是将start修改为stop即可。默认情况下监听9090端口。
+
+hbase-daemon.sh start thrift2
+hbase-daemons.sh start thrift2 (集群版本)
+
+
+
+说明：
+1. 通过--config可以指定多个集群（copy 不同集群的配置文件至该服务器不同目录）
+2. 通过-p可以指定不同的端口(不适用该参数，端口默认为9095)
+3. 和thrift端口相关的还有一个属性，可在hbase-site.xml文件中添加、修改：hbase.thrift.info.port ，默认值是9090，所以同一台上启动多个thrift时，还要修改hbase-site.xml中该属性值
+修改thrift端口
+
+第一种方法： 修改hbase-site.xml配置文件中的hbase.thrift.info.port和hbase.regionserver.thrift.port
+第二种方法：hbase-daemon.sh start thrift --infoport 9095 -p 9090
+

@@ -1,0 +1,102 @@
+使用 thrift client with python 连接 HBase 报错：
+
+     Traceback (most recent call last):
+       File "D:\workspace\Python\py\helloworld.py", line 27, in <module>
+         tables = client.getTableNames()
+       File "E:\mazhongsoft\python\lib\hbase\Hbase.py", line 788, in getTableNames
+         return self.recv_getTableNames()
+       File "E:\mazhongsoft\python\lib\hbase\Hbase.py", line 798, in recv_getTableNames
+         (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+       File "E:\mazhongsoft\python\lib\thrift\protocol\TBinaryProtocol.py", line 126, in readMessageBegin
+         sz = self.readI32()
+       File "E:\mazhongsoft\python\lib\thrift\protocol\TBinaryProtocol.py", line 203, in readI32
+         buff = self.trans.readAll(4)
+       File "E:\mazhongsoft\python\lib\thrift\transport\TTransport.py", line 58, in readAll
+         chunk = self.read(sz-have)
+       File "E:\mazhongsoft\python\lib\thrift\transport\TTransport.py", line 155, in read
+         self.__rbuf = StringIO(self.__trans.read(max(sz, self.DEFAULT_BUFFER)))
+       File "E:\mazhongsoft\python\lib\thrift\transport\TSocket.py", line 94, in read
+         raise TTransportException('TSocket read 0 bytes')
+     thrift.transport.TTransport.TTransportException: None
+
+查找原因，过程如下：
+1） 客户端代码
+
+     transport = TTransport.TBufferedTransport(TSocket('192.168.0.10', 9090))
+     protocol = TBinaryProtocol.TBinaryProtocol(transport)
+     client = Hbase.Client(protocol)
+     transport.open()
+
+2） hbase-site.xml 配置如下
+
+       <property>
+          <name>hbase.regionserver.thrift.framed</name>
+          <value>true</value>
+       </property>
+       <property>
+          <name>hbase.regionserver.thrift.compact</name>
+          <value>true</value>
+       </property>
+
+3） thrift server日志如下：（/var/log/hbase/hbase-hbase-thrift-<hostname>.log）
+
+     Wed Jan 14 14:54:43 CST 2015 Starting thrift on <hostname>
+     core file size          (blocks, -c) 0
+     data seg size           (kbytes, -d) unlimited
+     scheduling priority             (-e) 0
+     file size               (blocks, -f) unlimited
+     pending signals                 (-i) 191956
+     max locked memory       (kbytes, -l) unlimited
+     max memory size         (kbytes, -m) unlimited
+     open files                      (-n) 32768
+     pipe size            (512 bytes, -p) 8
+     POSIX message queues     (bytes, -q) 819200
+     real-time priority              (-r) 0
+     stack size              (kbytes, -s) 10240
+     cpu time               (seconds, -t) unlimited
+     max user processes              (-u) 1024
+     virtual memory          (kbytes, -v) unlimited
+     file locks                      (-x) unlimited
+     INFO  [main] util.VersionInfo: HBase 0.98.6-cdh5.3.0
+     INFO  [main] util.VersionInfo: Subversion file:///data/jenkins/workspace/generic-package-rhel64-6-0/topdir/BUILD/hbase-0.98.6-cdh5.3.0 -r Unknown
+     INFO  [main] util.VersionInfo: Compiled by jenkins on Tue Dec 16 19:13:29 PST 2014
+     INFO  [main] thrift.ThriftServerRunner: Using default thrift server type
+     INFO  [main] thrift.ThriftServerRunner: Using thrift server type threadpool
+     INFO  [main] impl.MetricsConfig: loaded properties from hadoop-metrics2-hbase.properties
+     INFO  [main] impl.MetricsSystemImpl: Scheduled snapshot period at 10 second(s).
+     INFO  [main] impl.MetricsSystemImpl: HBase metrics system started
+     INFO  [main] mortbay.log: Logging to org.slf4j.impl.Log4jLoggerAdapter(org.mortbay.log) via org.mortbay.log.Slf4jLog
+     INFO  [main] http.HttpServer: Added global filter 'safety' (class=org.apache.hadoop.http.HttpServer$QuotingInputFilter)
+    28 INFO  [main] http.HttpServer: Added filter static_user_filter (class=org.apache.hadoop.http.lib.StaticUserWebFilter$StaticUserFilter) to context thrift
+     INFO  [main] http.HttpServer: Added filter static_user_filter (class=org.apache.hadoop.http.lib.StaticUserWebFilter$StaticUserFilter) to context static
+     INFO  [main] http.HttpServer: Jetty bound to port 9095
+     INFO  [main] mortbay.log: jetty-6.1.26.cloudera.4
+     INFO  [main] mortbay.log: Started HttpServer$SelectChannelConnectorWithSafeStartup@0.0.0.0:9095
+     DEBUG [main] thrift.ThriftServerRunner: Using compact protocol
+     DEBUG [main] thrift.ThriftServerRunner: Using framed transport
+     INFO  [main] thrift.ThriftServerRunner: starting TBoundedThreadPoolServer on /0.0.0.0:9090; min worker threads=16, max worker threads=1000, max queued requests=1000
+
+由以上红色文字部分可知，是因为thrift 的server端和client端的协议不匹配造成的。
+
+解决方案有如下两个：
+方案一：修改hbase-site.xml，禁用TFramedTransport和TCompactProtocol功能，即：
+
+       <property>
+          <name>hbase.regionserver.thrift.framed</name>
+          <value>false</value>
+       </property>
+       <property>
+          <name>hbase.regionserver.thrift.compact</name>
+          <value>false</value>
+       </property>
+
+重启thrift 服务器： service hbase-thrift restart
+
+方案二：修改客户端代码
+
+     transport = TFramedTransport(TSocket('192.168.0.10', 9090))
+     protocol = TCompactProtocol.TCompactProtocol(transport)
+     client = Hbase.Client(protocol)
+     transport.open()  
+
+如果报错未找到TFramedTransport和TCompactProtocol，请查看/usr/lib/python2.6/site-packages/thrift目录下有没有protocol/TCompactProtocol.py文件，检查transport/TTransport.py文件中有没有类TFramedTransport。如果没有，可以在thrift官网下载源码包 thrift-0.9.2.tar.gz，用其中的lib/py/src/覆盖/usr/lib/python2.6/site-packages/thrift/目录即可。

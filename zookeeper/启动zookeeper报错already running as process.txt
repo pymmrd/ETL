@@ -1,0 +1,24 @@
+今天启动zookeeper的时候报错：
+
+[root@hadoop-one zookeeper-3.4.5]# bin/zkServer.sh start
+JMX enabled by default
+Using config: /root/zookeeper/zookeeper-3.4.5/bin/../conf/zoo.cfg
+Starting zookeeper ... already running as process 947..
+
+看了下947这个进程，发现是linux系统进程，应该不会冲突。又检查了下zookeeper会使用到的几个端口号，也都没有被占用。
+
+后来打开bin/zkServer.sh启动脚本，搜了下会抛出上面那段话的地方：
+
+    echo  -n "Starting zookeeper ... "
+    if [ -f $ZOOPIDFILE ]; then
+      if kill -0 `cat $ZOOPIDFILE` > /dev/null 2>&1; then
+         echo $command already running as process `cat $ZOOPIDFILE`.
+         exit 0
+      fi
+    fi
+
+看到$ZOOPIDFILE，想到应该是进程ID文件已经存在，导致启不起来。
+
+去dataDir下看，果然有一个zookeeper_server.pid，最后一次修改时间是几天前了。由于机器上次是因为断电异常关闭，大概导致了这个pid file的残留。
+
+删掉，重启，OK。

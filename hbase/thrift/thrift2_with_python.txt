@@ -1,0 +1,3 @@
+thirft2 和 python
+
+1. 成py代码：thrift -o <output directory{默认当前目录gen-py}> -gen py {对应版本的hbase源码地址}\src\main\resources\org\apache\hadoop\hbase\thrift2/hbase.thrift

@@ -1,0 +1,784 @@
+过滤器
+
+基础API中的查询操作在面对大量数据的时候是非常苍白的，这里Hbase提供了高级的查询方法：Filter。Filter可以根据簇、列、版本等更多的条件来对数据进行过滤，基于Hbase本身提供的三维有序（主键有序、列有序、版本有序），这些Filter可以高效的完成查询过滤的任务。带有Filter条件的RPC查询请求会把Filter分发到各个RegionServer，是一个服务器端（Server-side）的过滤器，这样也可以降低网络传输的压力。
+
+　　要完成一个过滤的操作，至少需要两个参数。一个是抽象的操作符，Hbase提供了枚举类型的变量来表示这些抽象的操作符：LESS/LESS_OR_EQUAL/EQUAL/NOT_EUQAL等；另外一个就是具体的比较器（Comparator），代表具体的比较逻辑，如果可以提高字节级的比较、字符串级的比较等。有了这两个参数，我们就可以清晰的定义筛选的条件，过滤数据。
+
+抽象操作符（比较运算符）
+
+    LESS <
+
+    LESS_OR_EQUAL <=
+
+    EQUAL =
+
+    NOT_EQUAL <>
+
+    GREATER_OR_EQUAL >=
+
+    GREATER >
+
+    NO_OP 排除所有
+
+
+比较器（指定比较机制）
+
+    BinaryComparator 按字节索引顺序比较指定字节数组，采用 Bytes.compareTo(byte[])
+
+    BinaryPrefixComparator 跟前面相同，只是比较左端的数据是否相同
+
+    NullComparator 判断给定的是否为空
+
+    BitComparator 按位比较
+
+    RegexStringComparator 提供一个正则的比较器，仅支持 EQUAL 和非 EQUAL
+
+    SubstringComparator 判断提供的子串是否出现在 value 中
+
+1. RowFilter：筛选出匹配的所有的行，对于这个过滤器的应用场景，是非常直观的：使用BinaryComparator可以筛选出具有某个行键的行，或者通过改变比较运算符（下面的例子中是CompareFilter.CompareOp.EQUAL）来筛选出符合某一条件的多条数据，以下就是筛选出行键为row1的一行数据：
+
+    Filter rf = new RowFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("row1"))); // OK 筛选出匹配的所有的行
+
+通过CompareFilter.CompareOp.GREATER晒选出行键数据：
+
+    Filter rowFilter = new RowFilter(CompareOp.GREATER, new BinaryComparator("95007".getBytes()));
+    scan.setFilter(rowFilter);
+
+    测试代码如下：
+        public class HbaseFilterTest {
+
+            private static final String ZK_CONNECT_KEY = "hbase.zookeeper.quorum";
+            private static final String ZK_CONNECT_VALUE = "hadoop1:2181,hadoop2:2181,hadoop3:2181";
+
+            private static Connection conn = null;
+            private static Admin admin = null;
+            
+            public static void main(String[] args) throws Exception {
+                
+                Configuration conf = HBaseConfiguration.create();
+                conf.set(ZK_CONNECT_KEY, ZK_CONNECT_VALUE);
+                conn = ConnectionFactory.createConnection(conf);
+                admin = conn.getAdmin();
+                Table table = conn.getTable(TableName.valueOf("student"));
+                
+                Scan scan = new Scan();
+                
+                Filter rowFilter = new RowFilter(CompareOp.GREATER, new BinaryComparator("95007".getBytes()));
+                scan.setFilter(rowFilter);
+                ResultScanner resultScanner = table.getScanner(scan);
+                for(Result result : resultScanner) {
+                    List<Cell> cells = result.listCells();
+                    for(Cell cell : cells) {
+                        System.out.println(cell);
+                    }
+                }
+                
+                
+            }
+        }
+
+
+2. PrefixFilter：筛选出具有特定前缀的行键的数据。这个过滤器所实现的功能其实也可以由RowFilter结合RegexComparator来实现，不过这里提供了一种简便的使用方法，以下过滤器就是筛选出行键以row为前缀的所有的行：
+
+   PrefixFilter prefixFilter = new PrefixFilter("9501".getBytes());
+   scan.setFilter(prefixFilter);
+   测试代码如下：
+    public class HbaseFilterTest2 {
+
+        private static final String ZK_CONNECT_KEY = "hbase.zookeeper.quorum";
+        private static final String ZK_CONNECT_VALUE = "hadoop1:2181,hadoop2:2181,hadoop3:2181";
+
+        private static Connection conn = null;
+        private static Admin admin = null;
+        
+        public static void main(String[] args) throws Exception {
+            
+            Configuration conf = HBaseConfiguration.create();
+            conf.set(ZK_CONNECT_KEY, ZK_CONNECT_VALUE);
+            conn = ConnectionFactory.createConnection(conf);
+            admin = conn.getAdmin();
+            Table table = conn.getTable(TableName.valueOf("student"));
+            
+            Scan scan = new Scan();
+            
+            PrefixFilter prefixFilter = new PrefixFilter("9501".getBytes());
+            
+            scan.setFilter(prefixFilter);
+            ResultScanner resultScanner = table.getScanner(scan);
+            for(Result result : resultScanner) {
+                List<Cell> cells = result.listCells();
+                for(Cell cell : cells) {
+                    System.out.println(Bytes.toString(cell.getRow()) + "\t" + Bytes.toString(cell.getFamily()) + "\t" + Bytes.toString(cell.getQualifier())
+                    + "\t" + Bytes.toString(cell.getValue()) + "\t" + cell.getTimestamp());
+                }
+            }
+            
+            
+        }
+    }   
+
+
+3. KeyOnlyFilter：这个过滤器唯一的功能就是只返回每行的行键，值全部为空，这对于只关注于行键的应用场景来说非常合适，这样忽略掉其值就可以减少传递到客户端的数据量，能起到一定的优化作用：
+
+    Filter kof = new KeyOnlyFilter(); // OK 返回所有的行，但值全是空
+
+4. RandomRowFilter：从名字上就可以看出其大概的用法，本过滤器的作用就是按照一定的几率（<=0会过滤掉所有的行，>=1会包含所有的行）来返回随机的结果集，对于同样的数据集，多次使用同一个RandomRowFilter会返回不通的结果集，对于需要随机抽取一部分数据的应用场景，可以使用此过滤器：
+
+    Filter rrf = new RandomRowFilter((float) 0.8); // OK 随机选出一部分的行
+
+5. InclusiveStopFilter：扫描的时候，我们可以设置一个开始行键和一个终止行键，默认情况下，这个行键的返回是前闭后开区间，即包含起始行，但不包含终止行，如果我们想要同时包含起始行和终止行，那么我们可以使用此过滤器：
+
+Filter isf = new InclusiveStopFilter(Bytes.toBytes("row1")); // OK 包含了扫描的上限在结果之
+
+
+
+6. FirstKeyOnlyFilter：如果你只想返回的结果集中只包含第一列的数据，那么这个过滤器能够满足你的要求。它在找到每行的第一列之后会停止扫描，从而使扫描的性能也得到了一定的提升：
+该过滤器仅仅返回每一行中的第一个cell的值，可以用于高效的执行行数统计操作。
+
+构造函数：
+    public FirstKeyOnlyFilter()
+
+代码
+
+    Table table = connection.getTable(TableName.valueOf("user"));
+             FirstKeyOnlyFilter fkof = new FirstKeyOnlyFilter();
+                Scan scan = new Scan();
+                scan.setFilter(fkof);
+                ResultScanner rs = table.getScanner(scan); 
+
+
+结果： 看着返回数据还没明白，仅仅返回每一行中的第一个cell的值，可以用于高效的执行行数统计操作。
+
+    [row:lisi_1495527849910],[family:account],[qualifier:idcard],[value:42963319861234561230],[time:1495556647872]
+    [row:lisi_1495527850081],[family:account],[qualifier:name],[value:lisi],[time:1495556647984]
+    [row:lisi_1495527850111],[family:account],[qualifier:password],[value:123451231236],[time:1495556648013]
+    [row:lisi_1495527850114],[family:address],[qualifier:city],[value:黄埔],[time:1495556648017]
+    [row:lisi_1495527850136],[family:address],[qualifier:province],[value:shanghai],[time:1495556648041]
+    [row:lisi_1495527850144],[family:info],[qualifier:age],[value:21],[time:1495556648045]
+    [row:lisi_1495527850154],[family:info],[qualifier:sex],[value:女],[time:1495556648056]
+    [row:lisi_1495527850159],[family:userid],[qualifier:id],[value:002],[time:1495556648060]
+    [row:wangwu_1495595824517],[family:userid],[qualifier:id],[value:009],[time:1495624624131]
+    [row:zhangsan_1495527850759],[family:account],[qualifier:idcard],[value:9897645464646],[time:1495556648664]
+    [row:zhangsan_1495527850824],[family:account],[qualifier:country],[value:china],[time:1495636452285]
+    [row:zhangsan_1495527850951],[family:address],[qualifier:province],[value:guangdong],[time:1495556648855]
+    [row:zhangsan_1495527850975],[family:info],[qualifier:age],[value:100],[time:1495556648878]
+    [row:zhangsan_1495527851080],[family:info],[qualifier:sex],[value:男],[time:1495556648983]
+    [row:zhangsan_1495527851095],[family:userid],[qualifier:id],[value:001],[time:1495556648996]
+
+对比原数据“
+
+    [row:lisi_1495527849910],[family:account],[qualifier:idcard],[value:42963319861234561230]
+    [row:lisi_1495527850081],[family:account],[qualifier:name],[value:lisi]
+    [row:lisi_1495527850111],[family:account],[qualifier:password],[value:123451231236]
+    [row:lisi_1495527850114],[family:address],[qualifier:city],[value:黄埔]
+    [row:lisi_1495527850136],[family:address],[qualifier:province],[value:shanghai]
+    [row:lisi_1495527850144],[family:info],[qualifier:age],[value:21]
+    [row:lisi_1495527850154],[family:info],[qualifier:sex],[value:女]
+    [row:lisi_1495527850159],[family:userid],[qualifier:id],[value:002]
+    [row:wangwu_1495595824517],[family:userid],[qualifier:id],[value:009]
+    [row:zhangsan_1495527850759],[family:account],[qualifier:idcard],[value:9897645464646]
+    [row:zhangsan_1495527850759],[family:account],[qualifier:passport],[value:5689879898]
+    [row:zhangsan_1495527850824],[family:account],[qualifier:country],[value:china]
+    [row:zhangsan_1495527850824],[family:account],[qualifier:name],[value:zhangsan]
+    [row:zhangsan_1495527850951],[family:address],[qualifier:province],[value:guangdong]
+    [row:zhangsan_1495527850975],[family:info],[qualifier:age],[value:100]
+    [row:zhangsan_1495527851080],[family:info],[qualifier:sex],[value:男]
+    [row:zhangsan_1495527851095],[family:userid],[qualifier:id],[value:001]
+
+对比一下明显，rowkey相同的只会返回第一个rowkey的所在cell数据
+
+17. FamilyFilter 列簇过滤器
+
+    Filter familyFilter = new FamilyFilter(CompareOp.EQUAL, new BinaryComparator("info".getBytes()));
+    scan.setFilter(familyFilter);
+    测试代码如下：
+    public class HbaseFilterTest {
+
+        private static final String ZK_CONNECT_KEY = "hbase.zookeeper.quorum";
+        private static final String ZK_CONNECT_VALUE = "hadoop1:2181,hadoop2:2181,hadoop3:2181";
+
+        private static Connection conn = null;
+        private static Admin admin = null;
+        
+        public static void main(String[] args) throws Exception {
+            
+            Configuration conf = HBaseConfiguration.create();
+            conf.set(ZK_CONNECT_KEY, ZK_CONNECT_VALUE);
+            conn = ConnectionFactory.createConnection(conf);
+            admin = conn.getAdmin();
+            Table table = conn.getTable(TableName.valueOf("student"));
+            
+            Scan scan = new Scan();
+
+            Filter familyFilter = new FamilyFilter(CompareOp.EQUAL, new BinaryComparator("info".getBytes()));
+            scan.setFilter(familyFilter);
+            ResultScanner resultScanner = table.getScanner(scan);
+            for(Result result : resultScanner) {
+                List<Cell> cells = result.listCells();
+                for(Cell cell : cells) {
+                    System.out.println(cell);
+                }
+            }
+        }
+    }
+
+7. ColumnPrefixFilter：顾名思义，它是按照列名的前缀来筛选单元格的，如果我们想要对返回的列的前缀加以限制的话，可以使用这个过滤器：
+    示例1：
+
+    Filter cpf = new ColumnPrefixFilter(Bytes.toBytes("qual1")); // OK 筛选出前缀匹配的列
+
+    示例2：
+    ColumnPrefixFilter columnPrefixFilter = new ColumnPrefixFilter("name".getBytes());
+    scan.setFilter(columnPrefixFilter);
+    完整测试代码：
+    public class HbaseFilterTest2 {
+
+        private static final String ZK_CONNECT_KEY = "hbase.zookeeper.quorum";
+        private static final String ZK_CONNECT_VALUE = "hadoop1:2181,hadoop2:2181,hadoop3:2181";
+
+        private static Connection conn = null;
+        private static Admin admin = null;
+        
+        public static void main(String[] args) throws Exception {
+            
+            Configuration conf = HBaseConfiguration.create();
+            conf.set(ZK_CONNECT_KEY, ZK_CONNECT_VALUE);
+            conn = ConnectionFactory.createConnection(conf);
+            admin = conn.getAdmin();
+            Table table = conn.getTable(TableName.valueOf("student"));
+            
+            Scan scan = new Scan();
+            
+            ColumnPrefixFilter columnPrefixFilter = new ColumnPrefixFilter("name".getBytes());
+            
+            scan.setFilter(columnPrefixFilter);
+            ResultScanner resultScanner = table.getScanner(scan);
+            for(Result result : resultScanner) {
+                List<Cell> cells = result.listCells();
+                for(Cell cell : cells) {
+                    System.out.println(Bytes.toString(cell.getRow()) + "\t" + Bytes.toString(cell.getFamily()) + "\t" + Bytes.toString(cell.getQualifier())
+                    + "\t" + Bytes.toString(cell.getValue()) + "\t" + cell.getTimestamp());
+                }
+            }
+            
+            
+        }
+    } 
+
+8. MultipleColumnPrefixFilter基于多个列名(即Qualifier)前缀过滤数据的,MultipleColumnPrefixFilter 和 ColumnPrefixFilter 行为差不多，但可以指定多个前缀
+
+    byte[][] prefixes = new byte[][] {Bytes.toBytes("name"), Bytes.toBytes("age")};
+    //返回所有行中以name或者age打头的列的数据
+    MultipleColumnPrefixFilter ff = new MultipleColumnPrefixFilter(prefixes);
+    Scan scan = new Scan();
+    scan.setFilter(ff);
+    ResultScanner rs = table.getScanner(scan);  
+
+结果:
+    [row:lisi_1495527850081],[family:account],[qualifier:name],[value:lisi],[time:1495556647984]
+    [row:lisi_1495527850144],[family:info],[qualifier:age],[value:21],[time:1495556648045]
+    [row:zhangsan_1495527850824],[family:account],[qualifier:name],[value:zhangsan],[time:1495556648729]
+    [row:zhangsan_1495527850975],[family:info],[qualifier:age],[value:100],[time:1495556648878]
+
+8. QualifierFilter 列过滤器 
+    Filter qualifierFilter = new QualifierFilter(CompareOp.EQUAL, new BinaryComparator("name".getBytes()));
+    scan.setFilter(qualifierFilter);
+    测试代码如下：
+    public class HbaseFilterTest {
+        private static final String ZK_CONNECT_KEY = "hbase.zookeeper.quorum";
+        private static final String ZK_CONNECT_VALUE = "hadoop1:2181,hadoop2:2181,hadoop3:2181";
+
+        private static Connection conn = null;
+        private static Admin admin = null;
+        
+        public static void main(String[] args) throws Exception {
+            
+            Configuration conf = HBaseConfiguration.create();
+            conf.set(ZK_CONNECT_KEY, ZK_CONNECT_VALUE);
+            conn = ConnectionFactory.createConnection(conf);
+            admin = conn.getAdmin();
+            Table table = conn.getTable(TableName.valueOf("student"));
+            
+            Scan scan = new Scan();
+            
+            Filter qualifierFilter = new QualifierFilter(CompareOp.EQUAL, new BinaryComparator("name".getBytes()));
+            scan.setFilter(qualifierFilter);
+            ResultScanner resultScanner = table.getScanner(scan);
+            for(Result result : resultScanner) {
+                List<Cell> cells = result.listCells();
+                for(Cell cell : cells) {
+                    System.out.println(cell);
+                }
+            }
+        }
+    }
+
+9. ColumnRangeFilter 基于列范围过滤数据
+构造函数：
+    ColumnRangeFilter(byte[] minColumn, boolean minColumnInclusive, byte[] maxColumn, boolean maxColumnInclusive)
+参数解释：
+    minColumn - 列范围的最小值，如果为空，则没有下限；
+    minColumnInclusive - 列范围是否包含minColumn ；
+    maxColumn - 列范围最大值，如果为空，则没有上限；
+    maxColumnInclusive - 列范围是否包含maxColumn 。
+
+代码：
+    Table table = connection.getTable(TableName.valueOf("user"));
+            byte[] startColumn = Bytes.toBytes("a");
+            byte[] endColumn = Bytes.toBytes("d");
+            //返回所有列中从a到d打头的范围的数据，
+            ColumnRangeFilter ff = new ColumnRangeFilter(startColumn, true, endColumn, true);
+            Scan scan = new Scan();
+            scan.setFilter(ff);
+            ResultScanner rs = table.getScanner(scan);  
+
+结果：返回列名开头是a 到  d的所有列数据
+    [row:lisi_1495527850114],[family:address],[qualifier:city],[value:黄埔],[time:1495556648017]
+    [row:lisi_1495527850144],[family:info],[qualifier:age],[value:21],[time:1495556648045]
+    [row:zhangsan_1495527850824],[family:account],[qualifier:country],[value:china],[time:1495636452285]
+    [row:zhangsan_1495527850975],[family:info],[qualifier:age],[value:100],[time:1495556648878]
+
+
+
+9. ValueFilter：按照具体的值来筛选单元格的过滤器，这会把一行中值不能满足的单元格过滤掉，如下面的构造器，对于每一行的一个列，如果其对应的值不包含ROW2_QUAL1，那么这个列就不会返回给客户端：
+    示例1：
+    Filter vf = new ValueFilter(CompareFilter.CompareOp.EQUAL, new SubstringComparator("ROW2_QUAL1")); // OK 筛选某个（值的条件满足的）特定的单元格
+    
+    示例2:
+    Filter valueFilter = new ValueFilter(CompareOp.EQUAL, new SubstringComparator("男"));
+    scan.setFilter(valueFilter);
+    测试代码如下：
+    public class HbaseFilterTest {
+
+        private static final String ZK_CONNECT_KEY = "hbase.zookeeper.quorum";
+        private static final String ZK_CONNECT_VALUE = "hadoop1:2181,hadoop2:2181,hadoop3:2181";
+
+        private static Connection conn = null;
+        private static Admin admin = null;
+        
+        public static void main(String[] args) throws Exception {
+            
+            Configuration conf = HBaseConfiguration.create();
+            conf.set(ZK_CONNECT_KEY, ZK_CONNECT_VALUE);
+            conn = ConnectionFactory.createConnection(conf);
+            admin = conn.getAdmin();
+            Table table = conn.getTable(TableName.valueOf("student"));
+            
+            Scan scan = new Scan();
+            
+            Filter valueFilter = new ValueFilter(CompareOp.EQUAL, new SubstringComparator("男"));
+            scan.setFilter(valueFilter);
+            ResultScanner resultScanner = table.getScanner(scan);
+            for(Result result : resultScanner) {
+                List<Cell> cells = result.listCells();
+                for(Cell cell : cells) {
+                    System.out.println(cell);
+                }
+            }
+        }
+    }
+
+
+10. ColumnCountGetFilter：这个过滤器来返回每行最多返回多少列，并在遇到一行的列数超过我们所设置的限制值的时候，结束扫描操作：
+
+    Filter ccf = new ColumnCountGetFilter(2); // OK 如果突然发现一行中的列数超过设定的最大值时，整个扫描操作会停止
+
+
+11. SingleColumnValueFilter：用一列的值决定这一行的数据是否被过滤。在它的具体对象上，可以调用setFilterIfMissing(true)或者setFilterIfMissing(false)，默认的值是false，其作用是，对于咱们要使用作为条件的列，如果这一列本身就不存在，那么如果为true，这样的行将会被过滤掉，如果为false，这样的行会包含在结果集中。
+    SingleColumnValueFilter scvf = new SingleColumnValueFilter(
+            Bytes.toBytes("colfam1"), 
+            Bytes.toBytes("qual2"), 
+            CompareFilter.CompareOp.NOT_EQUAL, 
+            new SubstringComparator("BOGUS"));
+    //如果不设置为 true，则那些不包含指定 column 的行也会返回
+    scvf.setFilterIfMissing(true);
+    scvf.setLatestVersionOnly(true); // OK
+    测试代码：
+    public class HbaseFilterTest2 {
+
+        private static final String ZK_CONNECT_KEY = "hbase.zookeeper.quorum";
+        private static final String ZK_CONNECT_VALUE = "hadoop1:2181,hadoop2:2181,hadoop3:2181";
+
+        private static Connection conn = null;
+        private static Admin admin = null;
+        
+        public static void main(String[] args) throws Exception {
+            
+            Configuration conf = HBaseConfiguration.create();
+            conf.set(ZK_CONNECT_KEY, ZK_CONNECT_VALUE);
+            conn = ConnectionFactory.createConnection(conf);
+            admin = conn.getAdmin();
+            Table table = conn.getTable(TableName.valueOf("student"));
+            
+            Scan scan = new Scan();
+            
+            SingleColumnValueFilter singleColumnValueFilter = new SingleColumnValueFilter(
+                    "info".getBytes(), 
+                    "name".getBytes(), 
+                    CompareOp.EQUAL, 
+                    new SubstringComparator("刘晨"));
+            singleColumnValueFilter.setFilterIfMissing(true);
+            
+            scan.setFilter(singleColumnValueFilter);
+            ResultScanner resultScanner = table.getScanner(scan);
+            for(Result result : resultScanner) {
+                List<Cell> cells = result.listCells();
+                for(Cell cell : cells) {
+                    System.out.println(Bytes.toString(cell.getRow()) + "\t" + Bytes.toString(cell.getFamily()) + "\t" + Bytes.toString(cell.getQualifier())
+                    + "\t" + Bytes.toString(cell.getValue()) + "\t" + cell.getTimestamp());
+                }
+            }
+        }
+    }
+    测试代码：
+    Table table = connection.getTable(TableName.valueOf("user")); 
+    SingleColumnValueFilter scvf= new SingleColumnValueFilter(
+        Bytes.toBytes("account"),
+        Bytes.toBytes("name"), 
+        CompareOp.EQUAL,
+        "zhangsan".getBytes()
+    ); 
+    scvf.setFilterIfMissing(true); //默认为false， 没有此列的数据也会返回 ，为true则只返回name=lisi的数据 
+    Scan scan = new Scan();
+    scan.setFilter(scvf); 
+    ResultScanner resultScanner = table.getScanner(scan); 
+    for (Result result : resultScanner) {
+        List<Cell> cells= result.listCells(); 
+        for (Cell cell : cells) {
+            String row = Bytes.toString(result.getRow());
+            String family1 = Bytes.toString(CellUtil.cloneFamily(cell));
+            String qualifier = Bytes.toString(CellUtil.cloneQualifier(cell));
+            String value = Bytes.toString(CellUtil.cloneValue(cell));
+            System.out.println("[row:" + row + "],[family:" + 
+                family1 + "],[qualifier:" + qualifier + "]" + 
+                ",[value:" + value + "],[time:" + cell.getTimestamp() + "]"
+            );
+        } 
+    }
+    如果setFilterIfMissing(true), 有匹配只会返回当前列所在的行数据，基于行的数据 country 也返回了，因为他么你的rowkey是相同的
+
+    [row:zhangsan_1495527850824],[family:account],[qualifier:country],[value:china],[time:1495636452285]
+
+    如果setFilterIfMissing（false），有匹配的列的值相同会返回，没有此列的 name的也会返回，， 不匹配的name则不会返回。
+    下面 红色是匹配列内容的会返回，其他的不是account：name列也会返回，， name=lisi的不会返回，因为不匹配。
+    [row:lisi_1495527849910],[family:account],[qualifier:idcard],[value:42963319861234561230],[time:1495556647872]
+    [row:lisi_1495527850111],[family:account],[qualifier:password],[value:123451231236],[time:1495556648013]
+    [row:lisi_1495527850114],[family:address],[qualifier:city],[value:黄埔],[time:1495556648017]
+    [row:lisi_1495527850136],[family:address],[qualifier:province],[value:shanghai],[time:1495556648041]
+    [row:lisi_1495527850144],[family:info],[qualifier:age],[value:21],[time:1495556648045]
+    [row:lisi_1495527850154],[family:info],[qualifier:sex],[value:女],[time:1495556648056]
+    [row:lisi_1495527850159],[family:userid],[qualifier:id],[value:002],[time:1495556648060]
+    [row:wangwu_1495595824517],[family:userid],[qualifier:id],[value:009],[time:1495624624131]
+    [row:zhangsan_1495527850759],[family:account],[qualifier:idcard],[value:9897645464646],[time:1495556648664]
+    [row:zhangsan_1495527850759],[family:account],[qualifier:passport],[value:5689879898],[time:1495636370056]
+    [row:zhangsan_1495527850824],[family:account],[qualifier:country],[value:china],[time:1495636452285]
+    *[row:zhangsan_1495527850824],[family:account],[qualifier:name],[value:zhangsan],[time:1495556648729]
+    [row:zhangsan_1495527850951],[family:address],[qualifier:province],[value:guangdong],[time:1495556648855]
+    [row:zhangsan_1495527850975],[family:info],[qualifier:age],[value:100],[time:1495556648878]
+    [row:zhangsan_1495527851080],[family:info],[qualifier:sex],[value:男],[time:1495556648983]
+    [row:zhangsan_1495527851095],[family:userid],[qualifier:id],[value:001],[time:1495556648996]
+
+12. SingleColumnValueExcludeFilter：这个与10种的过滤器唯一的区别就是，作为筛选条件的列的不会包含在返回的结果中。
+    SingleColumnValueExcludeFilter singleColumnValueExcludeFilter = new SingleColumnValueExcludeFilter(
+                    "info".getBytes(), 
+                    "name".getBytes(), 
+                    CompareOp.EQUAL, 
+                    new SubstringComparator("刘晨"));
+    singleColumnValueExcludeFilter.setFilterIfMissing(true);
+    scan.setFilter(singleColumnValueExcludeFilter);
+    测试代码：
+    public class HbaseFilterTest2 {
+
+        private static final String ZK_CONNECT_KEY = "hbase.zookeeper.quorum";
+        private static final String ZK_CONNECT_VALUE = "hadoop1:2181,hadoop2:2181,hadoop3:2181";
+
+        private static Connection conn = null;
+        private static Admin admin = null;
+        
+        public static void main(String[] args) throws Exception {
+            
+            Configuration conf = HBaseConfiguration.create();
+            conf.set(ZK_CONNECT_KEY, ZK_CONNECT_VALUE);
+            conn = ConnectionFactory.createConnection(conf);
+            admin = conn.getAdmin();
+            Table table = conn.getTable(TableName.valueOf("student"));
+            
+            Scan scan = new Scan();
+            
+            SingleColumnValueExcludeFilter singleColumnValueExcludeFilter = new SingleColumnValueExcludeFilter(
+                    "info".getBytes(), 
+                    "name".getBytes(), 
+                    CompareOp.EQUAL, 
+                    new SubstringComparator("刘晨"));
+            singleColumnValueExcludeFilter.setFilterIfMissing(true);
+            
+            scan.setFilter(singleColumnValueExcludeFilter);
+            ResultScanner resultScanner = table.getScanner(scan);
+            for(Result result : resultScanner) {
+                List<Cell> cells = result.listCells();
+                for(Cell cell : cells) {
+                    System.out.println(Bytes.toString(cell.getRow()) + "\t" + Bytes.toString(cell.getFamily()) + "\t" + Bytes.toString(cell.getQualifier())
+                    + "\t" + Bytes.toString(cell.getValue()) + "\t" + cell.getTimestamp());
+                }
+            }
+        }
+    }
+
+
+13. SkipFilter：这是一种附加过滤器，其与ValueFilter结合使用，根据整行中的每个列来做过滤，只要存在一列不满足条件，整行都被过滤掉。
+例如，如果一行中的所有列代表的是不同物品的重量，则真实场景下这些数值都必须大于零，我们希望将那些包含任意列值为0的行都过滤掉。
+在这个情况下，我们结合ValueFilter和SkipFilter共同实现该目的：
+    scan.setFilter(new SkipFilter(new ValueFilter(CompareOp.NOT_EQUAL,new BinaryComparator(Bytes.toBytes(0))));
+
+构造函数：
+
+SkipFilter(Filter filter) 
+
+代码：
+    Table table = connection.getTable(TableName.valueOf("user"));
+            SkipFilter sf = new SkipFilter(new ValueFilter(CompareOp.NOT_EQUAL,
+                    new BinaryComparator(Bytes.toBytes("zhangsan"))));
+            Scan scan = new Scan();
+            scan.setFilter(sf);
+            ResultScanner rs = table.getScanner(scan); 
+
+结果：
+
+    [row:lisi_1495527849910],[family:account],[qualifier:idcard],[value:42963319861234561230],[time:1495556647872]
+    [row:lisi_1495527850081],[family:account],[qualifier:name],[value:lisi],[time:1495556647984]
+    [row:lisi_1495527850111],[family:account],[qualifier:password],[value:123451231236],[time:1495556648013]
+    [row:lisi_1495527850114],[family:address],[qualifier:city],[value:黄埔],[time:1495556648017]
+    [row:lisi_1495527850136],[family:address],[qualifier:province],[value:shanghai],[time:1495556648041]
+    [row:lisi_1495527850144],[family:info],[qualifier:age],[value:21],[time:1495556648045]
+    [row:lisi_1495527850154],[family:info],[qualifier:sex],[value:女],[time:1495556648056]
+    [row:lisi_1495527850159],[family:userid],[qualifier:id],[value:002],[time:1495556648060]
+    [row:wangwu_1495595824517],[family:userid],[qualifier:id],[value:009],[time:1495624624131]
+    [row:zhangsan_1495527850759],[family:account],[qualifier:idcard],[value:9897645464646],[time:1495556648664]
+    [row:zhangsan_1495527850759],[family:account],[qualifier:passport],[value:5689879898],[time:1495636370056]
+    [row:zhangsan_1495527850951],[family:address],[qualifier:province],[value:guangdong],[time:1495556648855]
+    [row:zhangsan_1495527850975],[family:info],[qualifier:age],[value:100],[time:1495556648878]
+    [row:zhangsan_1495527851080],[family:info],[qualifier:sex],[value:男],[time:1495556648983]
+    [row:zhangsan_1495527851095],[family:userid],[qualifier:id],[value:001],[time:1495556648996]
+
+和原来数据相比列值为name的zhagnsan的所在行的rowkey为zhangsan_1495527850824在上面结果中是过滤了
+    [row:lisi_1495527849910],[family:account],[qualifier:idcard],[value:42963319861234561230]
+    [row:lisi_1495527850081],[family:account],[qualifier:name],[value:lisi]
+    [row:lisi_1495527850111],[family:account],[qualifier:password],[value:123451231236]
+    [row:lisi_1495527850114],[family:address],[qualifier:city],[value:黄埔]
+    [row:lisi_1495527850136],[family:address],[qualifier:province],[value:shanghai]
+    [row:lisi_1495527850144],[family:info],[qualifier:age],[value:21]
+    [row:lisi_1495527850154],[family:info],[qualifier:sex],[value:女]
+    [row:lisi_1495527850159],[family:userid],[qualifier:id],[value:002]
+    [row:wangwu_1495595824517],[family:userid],[qualifier:id],[value:009]
+    [row:zhangsan_1495527850759],[family:account],[qualifier:idcard],[value:9897645464646]
+    [row:zhangsan_1495527850759],[family:account],[qualifier:passport],[value:5689879898]
+    [row:zhangsan_1495527850824],[family:account],[qualifier:country],[value:china]
+    [row:zhangsan_1495527850824],[family:account],[qualifier:name],[value:zhangsan]
+    [row:zhangsan_1495527850951],[family:address],[qualifier:province],[value:guangdong]
+    [row:zhangsan_1495527850975],[family:info],[qualifier:age],[value:100]
+    [row:zhangsan_1495527851080],[family:info],[qualifier:sex],[value:男]
+    [row:zhangsan_1495527851095],[family:userid],[qualifier:id],[value:001]
+
+
+14. WhileMatchFilter：这个过滤器的应用场景也很简单，如果你想要在遇到某种条件数据之前的数据时，就可以使用这个过滤器；当遇到不符合设定条件的数据的时候，整个扫描也就结束了：
+
+Filter wmf = new WhileMatchFilter(rf); // OK 类似于Python itertools中的takewhile
+
+
+15. FilterList：用于综合使用多个过滤器。其有两种关系：FilterList.Operator.MUST_PASS_ONE和FilterList.Operator.MUST_PASS_ALL，默认的是FilterList.Operator.MUST_PASS_ALL，顾名思义，它们分别是AND和OR的关系，并且FilterList可以嵌套使用FilterList，使我们能够表达更多的需求：
+
+        List<Filter> filters = new ArrayList<Filter>();
+        filters.add(rf);
+        filters.add(vf);
+        FilterList fl = new FilterList(FilterList.Operator.MUST_PASS_ALL, filters); // OK 综合使用多个过滤器， AND 和 OR 两种关系
+
+
+16. TimestampsFilter时间戳过滤器
+
+    List<Long> list = new ArrayList<>();
+    list.add(1522469029503l);
+    TimestampsFilter timestampsFilter = new TimestampsFilter(list);
+    scan.setFilter(timestampsFilter);
+    测试代码如下:
+    public class HbaseFilterTest {
+        private static final String ZK_CONNECT_KEY = "hbase.zookeeper.quorum";
+        private static final String ZK_CONNECT_VALUE = "hadoop1:2181,hadoop2:2181,hadoop3:2181";
+
+        private static Connection conn = null;
+        private static Admin admin = null;
+        
+        public static void main(String[] args) throws Exception {
+            
+            Configuration conf = HBaseConfiguration.create();
+            conf.set(ZK_CONNECT_KEY, ZK_CONNECT_VALUE);
+            conn = ConnectionFactory.createConnection(conf);
+            admin = conn.getAdmin();
+            Table table = conn.getTable(TableName.valueOf("student"));
+            
+            Scan scan = new Scan();
+            
+            List<Long> list = new ArrayList<>();
+            list.add(1522469029503l);
+            TimestampsFilter timestampsFilter = new TimestampsFilter(list);
+            scan.setFilter(timestampsFilter);
+            ResultScanner resultScanner = table.getScanner(scan);
+            for(Result result : resultScanner) {
+                List<Cell> cells = result.listCells();
+                for(Cell cell : cells) {
+                    System.out.println(Bytes.toString(cell.getRow()) + "\t" + Bytes.toString(cell.getFamily()) + "\t" + Bytes.toString(cell.getQualifier())
+                    + "\t" + Bytes.toString(cell.getValue()) + "\t" + cell.getTimestamp());
+                }
+            }
+        }
+    }
+    
+
+18. PageFilter分页过滤器指定页面行数，返回对应行数的结果集。需要注意的是，该过滤器并不能保证返回的结果行数小于等于指定的页面行数，因为过滤器是分别作用到各个region server的，它只能保证当前region返回的结果行数不超过指定页面行数。
+
+构造函数：
+    PageFilter(long pageSize)
+代码：
+
+    Table table = connection.getTable(TableName.valueOf("user"));
+            PageFilter pf = new PageFilter(2L);
+            Scan scan = new Scan();
+            scan.setFilter(pf);
+            scan.setStartRow(Bytes.toBytes("zhangsan_"));
+            ResultScanner rs = table.getScanner(scan);
+
+结果：返回的结果实际上有四条，因为这数据来自不同RegionServer, 
+    [row:zhangsan_1495527850759],[family:account],[qualifier:idcard],[value:9897645464646],[time:1495556648664]
+    [row:zhangsan_1495527850759],[family:account],[qualifier:passport],[value:5689879898],[time:1495636370056]
+    [row:zhangsan_1495527850824],[family:account],[qualifier:country],[value:china],[time:1495636452285]
+    [row:zhangsan_1495527850824],[family:account],[qualifier:name],[value:zhangsan],[time:1495556648729]
+
+以上，是对于HBase内置的过滤器的部分总结，以下代码是数据写入代码：
+
+package com.reyun.hbase;
+
+import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.util.Bytes;
+
+public class HBaseDataFeeding {
+    private final static byte[] ROW1 = Bytes.toBytes("row1");
+    private final static byte[] ROW2 = Bytes.toBytes("row2");
+    private final static byte[] COLFAM1 = Bytes.toBytes("colfam1");
+    private final static byte[] COLFAM2 = Bytes.toBytes("colfam2");
+    private final static byte[] QUAL1 = Bytes.toBytes("qual1");
+    private final static byte[] QUAL2 = Bytes.toBytes("qual2");
+    
+    
+    public static void main(String[] args) throws IOException {
+        Configuration conf = HBaseConfiguration.create();
+        HTable table = new HTable(conf, "testtable");
+        table.setAutoFlushTo(false);
+        Put put_row1 = new Put(ROW1);
+        put_row1.add(COLFAM1, QUAL1, Bytes.toBytes("ROW1_QUAL1_VAL"));
+        put_row1.add(COLFAM1, QUAL2, Bytes.toBytes("ROW1_QUAL2_VAL"));
+        
+        Put put_row2 = new Put(ROW2);
+        put_row2.add(COLFAM1, QUAL1, Bytes.toBytes("ROW2_QUAL1_VAL"));
+        put_row2.add(COLFAM1, QUAL2, Bytes.toBytes("ROW2_QUAL2_VAL"));
+        
+        try{
+            table.put(put_row1);
+            table.put(put_row2);
+        }finally{
+            table.close();
+        }
+    }
+
+}
+
+
+以下是过滤器测试代码，可以通过修改代码，更换过滤器来看到具体的效果：
+
+package com.reyun.hbase;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
+import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
+import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.InclusiveStopFilter;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.PageFilter;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
+import org.apache.hadoop.hbase.filter.RandomRowFilter;
+import org.apache.hadoop.hbase.filter.RowFilter;
+import org.apache.hadoop.hbase.filter.SkipFilter;
+import org.apache.hadoop.hbase.filter.ValueFilter;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.SubstringComparator;
+import org.apache.hadoop.hbase.filter.WhileMatchFilter;
+import org.apache.hadoop.hbase.util.Bytes;
+
+public class HBaseScannerTest {
+
+    public static void main(String[] args) throws IOException, IllegalAccessException {
+        Configuration conf = HBaseConfiguration.create();
+        HTable table = new HTable(conf, "testtable");
+        table.setAutoFlushTo(false);
+        
+        Scan scan1 = new Scan();
+        SingleColumnValueFilter scvf = new SingleColumnValueFilter(
+                Bytes.toBytes("colfam1"), 
+                Bytes.toBytes("qual2"), 
+                CompareFilter.CompareOp.NOT_EQUAL, 
+                new SubstringComparator("BOGUS"));
+        scvf.setFilterIfMissing(false);
+        scvf.setLatestVersionOnly(true); // OK
+        Filter ccf = new ColumnCountGetFilter(2); // OK 如果突然发现一行中的列数超过设定的最大值时，整个扫描操作会停止
+        Filter vf = new ValueFilter(CompareFilter.CompareOp.EQUAL, new SubstringComparator("ROW2_QUAL1")); // OK 筛选某个（值的条件满足的）特定的单元格
+        Filter cpf = new ColumnPrefixFilter(Bytes.toBytes("qual2")); // OK 筛选出前缀匹配的列
+        Filter fkof = new FirstKeyOnlyFilter(); // OK 筛选出第一个每个第一个单元格
+        Filter isf = new InclusiveStopFilter(Bytes.toBytes("row1")); // OK 包含了扫描的上限在结果之内
+        Filter rrf = new RandomRowFilter((float) 0.8); // OK 随机选出一部分的行
+        Filter kof = new KeyOnlyFilter(); // OK 返回所有的行，但值全是空
+        Filter pf = new PrefixFilter(Bytes.toBytes("row")); // OK  筛选匹配行键的前缀成功的行
+        Filter rf = new RowFilter(CompareFilter.CompareOp.NOT_EQUAL, new BinaryComparator(Bytes.toBytes("row1"))); // OK 筛选出匹配的所有的行
+        Filter wmf = new WhileMatchFilter(rf); // OK 类似于Python itertools中的takewhile
+        Filter skf = new SkipFilter(vf); // OK 发现某一行中的一列需要过滤时，整个行就会被过滤掉
+        
+        List<Filter> filters = new ArrayList<Filter>();
+        filters.add(rf);
+        filters.add(vf);
+        FilterList fl = new FilterList(FilterList.Operator.MUST_PASS_ALL, filters); // OK 综合使用多个过滤器， AND 和 OR 两种关系
+        
+        scan1.
+        setStartRow(Bytes.toBytes("row1")).
+        setStopRow(Bytes.toBytes("row3")).
+        setFilter(scvf); 
+        ResultScanner scanner1 = table.getScanner(scan1);
+        
+        for(Result res : scanner1){
+            for(Cell cell : res.rawCells()){
+                System.out.println("KV: " + cell + ", Value: " + Bytes.toString(CellUtil.cloneValue(cell)));
+            }
+            System.out.println("------------------------------------------------------------");
+        }
+        
+        scanner1.close();
+        table.close();
+    }
+ 
+}
+
