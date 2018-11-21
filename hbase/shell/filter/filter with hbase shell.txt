@@ -16,7 +16,13 @@
 
 查询案例 
 1. 谁的值=sku188? 
-    hbase>scan 'test1', FILTER=>"ValueFilter(=,'binary:sku188')" 
+    ValueFilter (精确/模糊)   
+    ValueFilter(>,'binary:\x00\x00\x00\x00\x00\x00\x00\x0F')  
+    ValueFilter(=,'binary:sku188')  
+    ValueFilter(=,'substring:1')  
+    可以结合limit使用  LIMIT => 10 
+
+    hbase>scan 'test1', LIMIT => 10, FILTER=>"ValueFilter(=,'binary:sku188')" 
     ROW                  COLUMN+CELL 
     user1|ts2            column=sf:c1, timestamp=1409122354918, value=sku188 
 
