@@ -1,0 +1,77 @@
+Thrift API 和 过滤语法
+
+1. 过滤语法
+过滤语法在thrift中通过string来表示:
+    "FilterName(argument, argument, ..., argument)"
+    有如下规则：
+    a. 如果参数是string, 必须用单引号(')
+    b. 如果参数是boolean, integer,或者比较运算符(如<, >,或者 !=)不能使用单引号。
+    c. 如果参数自身有单引号，需要转义。
+
+2. 复合过滤
+    二元操作
+    AND: 过滤器必须两者之间同时满足
+    OR： 过滤器至少有一个满足
+
+    一元操作
+    SKIP: For a particular row, if any of the key-values fail the filter condition, the entire row is skipped.
+    WHILE: For a particular row, key-values will be emitted until a key-value is reached that fails the filter condition.
+
+3. 运算符优先级
+   a. 括号优先级最高
+   b. SKIP 和 WHILE次之
+   c. AND > OR
+
+4. 比较运算符
+    LESS (<)
+
+    LESS_OR_EQUAL (<=)
+
+    EQUAL (=)
+
+    NOT_EQUAL (!=)
+
+    GREATER_OR_EQUAL (>=)
+
+    GREATER (>)
+
+    NO_OP (no operation)
+
+5. 比较函数
+    BinaryComparator - binary
+    BinaryPrefixComparator - binaryprefix
+    RegexStringComparator - regexstring
+    SubStringComparator - substring
+    
+    使用形式：
+    binary:abc will match everything that is lexicographically greater than "abc"
+
+    binaryprefix:abc  匹配前三个字符串是"abc"
+
+    regexstring:ab*yz will match everything that doesn’t begin with "ab" and ends with "yz"
+
+    substring:abc123 will match everything that begins with the substring "abc123"
+
+6. 过滤器例子
+    1. "PrefixFilter ('Row') AND PageFilter (1) AND FirstKeyOnlyFilter ()" will return all key-value pairs that match the following conditions:
+
+        The row containing the key-value should have prefix Row
+
+        The key-value must be located in the first row of the table
+
+        The key-value pair must be the first key-value in the row
+
+    2. "(RowFilter (=, 'binary:Row 1') AND TimeStampsFilter (74689, 89734)) OR ColumnRangeFilter ('abc', true, 'xyz', false))" will return all key-value pairs that match both the following conditions:
+
+        The key-value is in a row having row key Row 1
+
+        The key-value must have a timestamp of either 74689 or 89734.
+
+        Or it must match the following condition:
+
+            The key-value pair must be in a column that is lexicographically >= abc and < xyz 
+
+    3. "SKIP ValueFilter (0)" will skip the entire row if any of the values in the row is not 0
+
+
+  

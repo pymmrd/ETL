@@ -20,6 +20,35 @@ TScan属性:
     (14, TType.I32, 'readType', None, None, ), # 14
     (15, TType.I32, 'limit', None, None, ), # 15
   )
+
+示例:
+1. SingleColumnValueFilter
+    参数定义如下：
+    SingleColumnValueFilter(
+        '<family>',
+        '<qualifier>',
+        <compare operator>,
+        '<comparator>',
+        <filterIfColumnMissing_boolean>,
+        <latest_version_boolean>
+    )
+    使用方式:
+    a. 查询出a.aa这个列里面包含test
+    "SingleColumnValueFilter(
+        'a',
+        'aa',
+        =,
+        'substring:test',
+        true,
+        false
+    )"
+    b. 查询出a.aa这个列里面包含test
+        "SingleColumnValueFilter ('a', 'aa', =, 'regexstring:(test|check).com', true, false)"
+2. "PrefixFilter ('Row') AND PageFilter (1) AND FirstKeyOnlyFilter ()"
+
+3. "(RowFilter(=, 'binary:Row 1') AND TimeStampsFilter (74689, 89734)) OR ColumnRangeFilter ('abc', true, 'xyz', false))" 
+
+4. "SKIP ValueFilter (0)"
 """
 
 # Third-party imports
@@ -41,7 +70,8 @@ table = 't1'
 transport.open() 
 filterString = "ValueFilter(=, 'binary:v11')"
 filterString = "ColumnPrefixFilter('c') AND ( ValueFilter(=,'substring:v2') OR ValueFilter(=,'substring:v4') )" 
-#filterString = "RowFilter.new(CompareFilter::CompareOp.valueOf('EQUAL'), SubstringComparator.new('r'))"
+filterString = "RowFilter(=, 'substring:r')"
+filterString = "SingleColumnValueFilter('f1', 'c1', =, 'regexstring:v1',true, false)"
 scanner_id = client.openScanner(
     table=table,
     tscan=TScan(
