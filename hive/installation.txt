@@ -1,0 +1,225 @@
+Hive安装
+
+1. 下载hive 
+   发布版本: https://mirrors.tuna.tsinghua.edu.cn/apache/hive/
+   $ wget https://mirrors.tuna.tsinghua.edu.cn/apache/hive/hive-2.3.4/apache-hive-2.3.4-bin.tar.gz
+   $ tar -xvzf apache-hive-2.3.4-bin.tar.gz
+
+2. 设置环境变量
+  在.bashrc文件尾部添加环境变量，保存退出
+  $ vim ~/.bashrc 
+  export HIVE_HOME=<hive-install-dir>
+  export HADOOP_HOME=<hadoop-install-dir>
+  $ source .bashrc
+
+3. 使用mysql存储hive元数据
+  $ mysql -uroot -p
+  mysql> create database hive character set utf8; ＃创建名为hive的元数据库
+  mysql> grant all on hive.* to 'hive'@'localhost' identified by 'hive'; # 设置hive数据库的用户名hive和密码hive
+
+4.配置hive-site.xml
+  $ cd apache-hive-x.x.x/conf
+  $ cp hive-default.xml.template hive-site.xml
+  $ vim hive-site.xml
+  找到文件中如下属性, 并按照上一步创建的数据库修改value属性:
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>  # 访问hive数据库的用户名
+        <value>hive</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name> # 访问hive数据库的密码
+        <value>hive</value>
+    </property>
+   <property>
+        <name>javax.jdo.option.ConnectionURL</name>  # mysql连接URL
+        <value>jdbc:mysql://localhost:3306/hive</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name> #mysql驱动程序
+        <value>com.mysql.jdbc.Driver</value>
+    </property>
+
+5. 复制mysql的驱动程序到hive/lib下
+    $ cp mysql-connector-java-5.1.18-bin.jar  <hive-install-dir>/lib
+
+6. 初始化hive元数据
+    $ ./apache-hive-x.x.x/bin/schematool -dbType mysql -initSchema
+    输出如下:
+    SLF4J: Class path contains multiple SLF4J bindings.
+    SLF4J: Found binding in [jar:file:/home/zg163/single/apache-hive-2.3.3-bin/lib/log4j-slf4j-impl-2.6.2.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+    SLF4J: Found binding in [jar:file:/home/zg163/single/hadoop-2.7.5/share/hadoop/common/lib/slf4j-log4j12-1.7.10.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+    SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+    SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+    Metastore connection URL:    jdbc:mysql://localhost:3306/hive
+    Metastore Connection Driver :    com.mysql.jdbc.Driver
+    Metastore connection User:   hive
+    Starting metastore schema initialization to 2.3.0
+    Initialization script hive-schema-2.3.0.mysql.sql
+    Initialization script completed
+    schemaTool completed
+
+7. 启动hive
+    $ hive
+    SLF4J: Class path contains multiple SLF4J bindings.
+    SLF4J: Found binding in [jar:file:/home/zg163/single/apache-hive-2.3.3-bin/lib/log4j-slf4j-impl-2.6.2.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+    SLF4J: Found binding in [jar:file:/home/zg163/single/hadoop-2.7.5/share/hadoop/common/lib/slf4j-log4j12-1.7.10.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+    SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+    SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+
+    Logging initialized using configuration in jar:file:/home/zg163/single/apache-hive-2.3.3-bin/lib/hive-common-2.3.3.jar!/hive-log4j2.properties Async: true
+    Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
+    hive> 
+
+    成功进入hive界面，hive配置完成
+
+8. 查询mysql中hive库表的初始化
+    $ mysql hive -uhive -phive
+    mysql> show tables;
+    +---------------------------+
+    | Tables_in_hive            |
+    +---------------------------+
+    | AUX_TABLE                 |
+    | BUCKETING_COLS            |
+    | CDS                       |
+    | COLUMNS_V2                |
+    | COMPACTION_QUEUE          |
+    | COMPLETED_COMPACTIONS     |
+    | COMPLETED_TXN_COMPONENTS  |
+    | DATABASE_PARAMS           |
+    | DBS                       |
+    | DB_PRIVS                  |
+    | DELEGATION_TOKENS         |
+    | FUNCS                     |
+    | FUNC_RU                   |
+    | GLOBAL_PRIVS              |
+    | HIVE_LOCKS                |
+    | IDXS                      |
+    | INDEX_PARAMS              |
+    | KEY_CONSTRAINTS           |
+    | MASTER_KEYS               |
+    | NEXT_COMPACTION_QUEUE_ID  |
+    | NEXT_LOCK_ID              |
+    | NEXT_TXN_ID               |
+    | NOTIFICATION_LOG          |
+    | NOTIFICATION_SEQUENCE     |
+    | NUCLEUS_TABLES            |
+    | PARTITIONS                |
+    | PARTITION_EVENTS          |
+    | PARTITION_KEYS            |
+    | PARTITION_KEY_VALS        |
+    | PARTITION_PARAMS          |
+    | PART_COL_PRIVS            |
+    | PART_COL_STATS            |
+    | PART_PRIVS                |
+    | ROLES                     |
+    | ROLE_MAP                  |
+    | SDS                       |
+    | SD_PARAMS                 |
+    | SEQUENCE_TABLE            |
+    | SERDES                    |
+    | SERDE_PARAMS              |
+    | SKEWED_COL_NAMES          |
+    | SKEWED_COL_VALUE_LOC_MAP  |
+    | SKEWED_STRING_LIST        |
+    | SKEWED_STRING_LIST_VALUES |
+    | SKEWED_VALUES             |
+    | SORT_COLS                 |
+    | TABLE_PARAMS              |
+    | TAB_COL_STATS             |
+    | TBLS                      |
+    | TBL_COL_PRIVS             |
+    | TBL_PRIVS                 |
+    | TXNS                      |
+    | TXN_COMPONENTS            |
+    | TYPES                     |
+    | TYPE_FIELDS               |
+    | VERSION                   |
+    | WRITE_SET                 |
+    +---------------------------+
+    57 rows in set (0.00 sec) 
+
+
+9. hive测试
+   a. 查看hadoop中的HDFS存了什么
+    $ ./hadoop-2.7.5/bin/hadoop fs -lsr /
+    -rw-r--r--   3 zg163 supergroup         91 2018-11-22 15:13 /hbase/oldWALs/localhost%2C16201%2C1542856363658.default.1542867183650
+    drwx-wx-wx   - zg163 supergroup          0 2018-11-22 14:31 /tmp
+    drwx-wx-wx   - zg163 supergroup          0 2018-11-22 14:31 /tmp/hive
+    drwx------   - zg163 supergroup          0 2018-11-22 15:00 /tmp/hive/zg163
+    drwx------   - zg163 supergroup          0 2018-11-22 15:00 /tmp/hive/zg163/c589bab0-44ec-4911-ae00-5d8b4eb543d3
+    drwx------   - zg163 supergroup          0 2018-11-22 15:00 /tmp/hive/zg163/c589bab0-44ec-4911-ae00-5d8b4eb543d3/_tmp_space.db
+   
+   b.进入hive并创建一个测试库和测试表
+   $ hive
+   hive> create database hive_1;
+   OK
+   Time taken: 1.432 seconds
+   显示库:
+   hive> show databases;
+   OK
+   default
+   hive_1
+   Time taken: 1.25 seconds, Fetched: 2 row(s)
+   创建库成功！
+  
+  c. 查询hadoop此时HDFS有什么变化
+    $ ./hadoop-2.7.5/bin/hadoop fs -lsr /
+    drwx-wx-wx   - zg163 supergroup          0 2018-11-22 14:31 /tmp/hive
+    drwx------   - zg163 supergroup          0 2018-11-22 15:00 /tmp/hive/zg163
+    drwx------   - zg163 supergroup          0 2018-11-22 15:00 /tmp/hive/zg163/c589bab0-44ec-4911-ae00-5d8b4eb543d3
+    drwx------   - zg163 supergroup          0 2018-11-22 15:00 /tmp/hive/zg163/c589bab0-44ec-4911-ae00-5d8b4eb543d3/_tmp_space.db
+    drwxr-xr-x   - zg163 supergroup          0 2018-11-22 15:26 /user
+    drwxr-xr-x   - zg163 supergroup          0 2018-11-22 15:26 /user/hive
+    drwxr-xr-x   - zg163 supergroup          0 2018-11-22 15:26 /user/hive/warehouse
+    drwxr-xr-x   - zg163 supergroup          0 2018-11-22 15:26 /user/hive/warehouse/hive_1.db
+    多了一个库hive_1
+
+  d. mysql中的hive库的变化
+    mysql> select * from DBS;
+    +-------+-----------------------+-----------------------------------------------------+---------+------------+------------+
+    | DB_ID | DESC                  | DB_LOCATION_URI                                     | NAME    | OWNER_NAME | OWNER_TYPE |
+    +-------+-----------------------+-----------------------------------------------------+---------+------------+------------+
+    |     1 | Default Hive database | hdfs://localhost:8020/user/hive/warehouse           | default | public     | ROLE       |
+    |     2 | NULL                  | hdfs://localhost:8020/user/hive/warehouse/hive_1.db | hive_1  | zg163      | USER       |
+    +-------+-----------------------+-----------------------------------------------------+---------+------------+------------+
+    2 rows in set (0.00 sec)
+
+  e. 在hive_1下创建一个表hive_01 
+    hive> use hive_1;
+    OK
+    Time taken: 0.03 seconds
+    hive> create table hive_01 (id int,name string);
+    OK
+    Time taken: 0.831 seconds
+    hive> show tables;
+    OK
+    hive_01
+    Time taken: 0.116 seconds, Fetched: 1 row(s)
+
+    查看hadoop此时HDFS有什么变化
+    $ ./hadoop-2.7.5/bin/hadoop fs -lsr /
+    drwx------   - zg163 supergroup          0 2018-11-22 15:00 /tmp/hive/zg163/c589bab0-44ec-4911-ae00-5d8b4eb543d3/_tmp_space.db
+    drwxr-xr-x   - zg163 supergroup          0 2018-11-22 15:26 /user
+    drwxr-xr-x   - zg163 supergroup          0 2018-11-22 15:26 /user/hive
+    drwxr-xr-x   - zg163 supergroup          0 2018-11-22 15:26 /user/hive/warehouse
+    drwxr-xr-x   - zg163 supergroup          0 2018-11-22 15:36 /user/hive/warehouse/hive_1.db
+    drwxr-xr-x   - zg163 supergroup          0 2018-11-22 15:36 /user/hive/warehouse/hive_1.db/hive_01
+    
+    mysql下:
+    mysql> select * from TBLS \G
+    *************************** 1. row ***************************
+                TBL_ID: 1
+           CREATE_TIME: 1542872166
+                 DB_ID: 2
+      LAST_ACCESS_TIME: 0
+                 OWNER: zg163
+             RETENTION: 0
+                 SD_ID: 1
+              TBL_NAME: hive_01
+              TBL_TYPE: MANAGED_TABLE
+    VIEW_EXPANDED_TEXT: NULL
+    VIEW_ORIGINAL_TEXT: NULL
+    IS_REWRITE_ENABLED:  
+    1 row in set (0.00 sec)
+
+ 

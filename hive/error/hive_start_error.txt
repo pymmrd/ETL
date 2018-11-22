@@ -1,0 +1,45 @@
+./hive
+
+SLF4J: Class path contains multiple SLF4J bindings.
+SLF4J: Found binding in [jar:file:/home/zg163/single/apache-hive-2.3.3-bin/lib/log4j-slf4j-impl-2.6.2.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/zg163/single/hadoop-2.7.5/share/hadoop/common/lib/slf4j-log4j12-1.7.10.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+
+Logging initialized using configuration in jar:file:/home/zg163/single/apache-hive-2.3.3-bin/lib/hive-common-2.3.3.jar!/hive-log4j2.properties Async: true
+Exception in thread "main" java.lang.IllegalArgumentException: java.net.URISyntaxException: Relative path in absolute URI: ${system:java.io.tmpdir%7D/$%7Bsystem:user.name%7D
+    at org.apache.hadoop.fs.Path.initialize(Path.java:205)
+    at org.apache.hadoop.fs.Path.<init>(Path.java:171)
+    at org.apache.hadoop.hive.ql.session.SessionState.createSessionDirs(SessionState.java:659)
+    at org.apache.hadoop.hive.ql.session.SessionState.start(SessionState.java:582)
+    at org.apache.hadoop.hive.ql.session.SessionState.beginStart(SessionState.java:549)
+    at org.apache.hadoop.hive.cli.CliDriver.run(CliDriver.java:750)
+    at org.apache.hadoop.hive.cli.CliDriver.main(CliDriver.java:686)
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+    at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+    at java.lang.reflect.Method.invoke(Method.java:498)
+    at org.apache.hadoop.util.RunJar.run(RunJar.java:221)
+    at org.apache.hadoop.util.RunJar.main(RunJar.java:136)
+Caused by: java.net.URISyntaxException: Relative path in absolute URI: ${system:java.io.tmpdir%7D/$%7Bsystem:user.name%7D
+    at java.net.URI.checkPath(URI.java:1823)
+    at java.net.URI.<init>(URI.java:745)
+    at org.apache.hadoop.fs.Path.initialize(Path.java:202)
+    ... 12 more
+
+配置文件修改如下属性:(主要是设置目录)
+  <property>
+    <name>hive.exec.scratchdir</name>
+    <value>/tmp/hive</value>
+    <description>HDFS root scratch dir for Hive jobs which gets created with write all (733) permission. For each connecting user, an HDFS scratch dir: ${hive.exec.scratchdir}/&lt;username&gt; is created, with ${hive.scratch.dir.permission}.</description>
+  </property>
+  <property>
+    <name>hive.exec.local.scratchdir</name>
+    <value>/tmp/hive/local</value>
+    <description>Local scratch space for Hive jobs</description>
+  </property>
+  <property>
+    <name>hive.downloaded.resources.dir</name>
+    <value>/tmp/hive/resources</value>
+    <description>Temporary local directory for added resources in the remote file system.</description>
+  </property> 
