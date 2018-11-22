@@ -1,0 +1,205 @@
+                                                 hive与Hbase整合
+1. 准备测试数据
+(1). 测试数据文件
+创建测试文件lecture-10.csv,内容如下:
+Xiaoming    90
+Zhaojun 100
+Lili    80
+Zhouzi  76
+Qimin   75
+Songjiang   50
+Zhangsan    60
+Zhaokuang   68
+Zhangziming 90
+Quyangchun  100
+Huanghun    80
+Liulijun    90
+Wangzili    45
+Xiaojunli   100
+Wangziliang 85
+Masanli 92
+Zhangside   100
+Hubayi  94
+Pangzi  82
+Yangshubing 100
+
+(2) 加载HDFS
+在Hadoop主目录下执行下面命令：
+hadoop fs -mkdir /hive-hbase
+hadoop fs -mkdir /hive-hbase/lecture
+hadoop fs -put  /home/zg163/ETL/hive/data/lecture-10.csv /hive-hbase/lecture/ 
+
+(3) 创建Hive表
+进入Hive shell客户端创建库lecture,命令如下:
+hive>create database lecture;
+
+(4) 创建外部表
+hive> create external table IF NOT EXISTS lecture.lecture10(sname string, score int) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' ' STORED AS TEXTFILE LOCATION '/hive-hbase/lecture';
+OK
+Time taken: 0.681 seconds
+
+(5) 查看数据
+下面是查询语句的执行结果，可以看到hive表中的数据和HDFS上的数据一致
+hive> select * from lecture.lecture10;
+OK
+Xiaoming    90
+Zhaojun 100
+Lili    80
+Zhouzi  76
+Qimin   75
+Songjiang   50
+Zhangsan    60
+Zhaokuang   68
+Zhangziming 90
+Quyangchun  100
+Huanghun    80
+Liulijun    90
+Wangzili    45
+Xiaojunli   100
+Wangziliang 85
+Masanli 92
+Zhangside   100
+Hubayi  94
+Pangzi  82
+Yangshubing 100
+Time taken: 1.385 seconds, Fetched: 20 row(s)
+
+2. 创建内部表
+hive> CREATE TABLE lecture.hbase_lecture10(sname string, score int) STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler' WITH SERDEPROPERTIES ("hbase.columns.mapping"=":key,cf1:score") TBLPROPERTIES("hbase.table.name"="hbase_lecture10");
+OK
+Time taken: 3.695 seconds
+
+(1) 查看Hive中所创建的表
+进入Hive Shell客户端执行查看表命令：
+hive> use lecture;
+OK
+Time taken: 0.013 seconds
+hive> show tables;
+OK
+hbase_lecture10
+lecture10
+Time taken: 0.016 seconds, Fetched: 2 row(s)
+
+(2) 查看HBase中所创建表
+进入HBase shell客户端执行查看表命令：
+hbase>list
+TABLE                                                                          
+hbase_lecture10                                                                
+t1                                                                             
+test                                                                           
+test1                                                                          
+4 row(s) in 0.1730 seconds
+下面介绍创建内部表语句中各个部分的含义，如下所示:
+           建表语句模块                                                 功能描述
+
+CREATE TABLE                                                             建表语句 
+
+lecture.hbase_lecture10                                                  所创建的Hive表名字
+
+(sname string, score int)                                                所创建的Hive表字段
+
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'             指定使用Hive Storage Handlers
+
+WITH SERDEPROPERTIES("hbase.columns.mapping" = ":key, cf1:score")        指定属性，这里指定HBase表和hive的字段映射关系。
+                                                                         注意这里的字段个数和顺序必须和前面Hive表的属性保持
+                                                                         一致。第一个字段:key映射到Hive中的sname字段，后面字段
+                                                                         依此类推。
+
+TBLPROPERTIES("hbase.table.name"="hbase_lecture10")                      指定HBase表属性，这里指定HBase表名。该字段可以省略不写，
+                                                                         此时，HBase中表明使用Hive的［库名]表名的格式。
+                                                                         例如:lecture.hbase_test3
+
+3. 加载数据
+ 创建完内部表，可以通过Hive支持的INSERT OVERWRITE 方式将一个表的数据导入HBase。下面是对应的执行语句:
+hive> INSERT OVERWRITE TABLE lecture.hbase_lecture10 SELECT sname, score from lecture.lecture10;
+
+在执行的过程中，该语句被Hive内部Driver解析为MapReduce并行加载数据。详细执行过程可以参考下面的日志信息
+WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
+Query ID = zg163_20181122155642_383f0500-42e3-412b-ac15-b438d1875549
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_1542856324876_0001, Tracking URL = http://localhost:8088/proxy/application_1542856324876_0001/
+Kill Command = /home/zg163/single/hadoop-2.7.5/bin/hadoop job  -kill job_1542856324876_0001
+Hadoop job information for Stage-3: number of mappers: 1; number of reducers: 0
+2018-11-22 15:56:54,143 Stage-3 map = 0%,  reduce = 0%
+2018-11-22 15:56:59,516 Stage-3 map = 100%,  reduce = 0%, Cumulative CPU 3.58 sec
+MapReduce Total cumulative CPU time: 3 seconds 580 msec
+Ended Job = job_1542856324876_0001
+MapReduce Jobs Launched: 
+Stage-Stage-3: Map: 1   Cumulative CPU: 3.58 sec   HDFS Read: 10774 HDFS Write: 0 SUCCESS
+Total MapReduce CPU Time Spent: 3 seconds 580 msec
+OK
+Time taken: 19.792 seconds
+
+
+4. 执行查询
+   hive>select count(*) from lecture.hbase_lecture10;
+
+5. 创建外部表
+  创建外部表适用于某表已经在HBase中存在，但在Hive中没有相关信息。此时，可以通过
+创建外部表的方式，为HBase现有表提供SQL查询条件。而内部表适用于Hive和HBase都没有相关表的情况。
+ (1)创建HBase表
+  进入HBase Shell客户端执行建表命令:
+  create 'hbase_test', {NAME => 'cf1'}
+  
+ (2)插入数据
+  put 'hbase_test' 'a', 'cf1:v1', 1
+  put 'hbase_test' 'b', 'cf1:v1', 2
+  put 'hbase_test' 'c', 'cf1:v1', 3
+
+ (3)查看数据
+ 执行扫描表的操作:
+ hbase>scan 'hbase_test'
+ ROW                                  COLUMN+CELL 
+ a                                   column=cf1:v1, timestamp=1542876773198, value=1
+ b                                   column=cf1:v1, timestamp=1542876780587, value=2
+ c                                   column=cf1:v1, timestamp=1542876786670, value=3
+3 row(s) in 0.0230 seconds
+
+ (4)创建Hive外部表
+   进入Hive Shell客户端，创建外部表lecture.hbase_test,建表命令如下:
+   hive>CREATE EXTERNAL TABLE lecture.hbase_test(key string, value int) STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler' WITH SERDEPROPERTIES("hbase.columns.mapping"=":key, cf1:v1") TBLPROPERTIES("hbase.table.name"="hbase_test");
+ (5)Hive查看数据
+  Hive的查询命令与标准SQL类似, 命令如下:
+  hive>select * from lecture.hbase_test;
+  OK
+  a  1
+  b  2
+  c  3
+通过创建外部表可以成功地从Hive查询HBase表的数据。
+
+6. HBase到Hive的字段映射
+  在建表语句中，对于HBase到Hive的字段映射，存在两个SERDEPROPERTIES。
+  映射属性                                             功能描述
+  hbase.columns.mapping                  字段映射属性。到目前为止，一个Hive表可以包含N个字段，该属性也需要包含N个声明
+  hbase.table.default.storage.type       可以是任意的string(默认)或者二进制类型。该选项只在Hive0.9.*有效
+  字段映射声明可以是以下两种方式:
+   . :key
+   . column-family-name:[column-name][#(binary|string)] 
+  字段声明有如下特性：
+   . 如果没有指定类型，则会使用hbase.table.default.storage.type的值
+   . 允许使用属性前缀，例如#b代替#binary
+  如果没有给定字段名，Hive字段会映射到HBase列簇中的所有字段; 必须使用Hive Map类型访问数据
+  无法访问HBase中的timestamp属性，每次查询结果都返回最近的timestamp
+  没有必要引用所有HBase的列簇，那些没有映射的列簇将不能通过Hive表访问。
+
+7. 多列簇和 Hive Map类型
+使用Hive的三个字段: value1, value2和value3, 分别对应HBase的列cf1:col1, cf2:col2, cf2:col3, 其中
+包含cf1和cf2两个列簇。
+hive> CREATE TABLE hbase_test2(key string, value1 string, value2 string, value3 string) \
+> STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler' \
+> WITH SERDEPROPERTIES("hbase.columns.mapping"=":key,cf1:col1, cf1:col2, cf2:col3") \
+>TBLPROPERTIES("hbase.table.name"="hbase_test2");
+
+8. Hive Map
+  Hive Map可以访问整个列簇，而不用显示的指定列名。该用法作用于不需要查看表结构
+如果可以直接通过语句的自适应自动查询再好不过。
+  (1) 通过Hive建表
+  hive>CREATE TABLE hbase_test3(row_key string, value<string, int>) STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler' \
+     > WITH SERDEPROPERTIES("hbase.columns.mapping" = ":key, cf:");
+  上面代码中的value map<string, int)参数就是Hive Map的代码表现形式，它是表hbae_test3中的一列，并不需要
+  显示地指定列名
+  (2) 插入数据
+   hive> INSERT OVERWRITE TABLE hbase_test3 SELECT sname, map(sname, score) from lecture.lecture10;
+
