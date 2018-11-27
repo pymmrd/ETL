@@ -1,0 +1,158 @@
+                                                             Spark2.3:读写HBase数据
+一. 创建一个HBase表
+
+这里依然是以student表为例进行演示。这里假设你已经成功安装了HBase数据库，如果你还没有安装，可以参考厦门大学数据库实验室HBase安装和使用教程，进行安装，安装好以后，不要创建数据库和表，只要跟着本节后面的内容操作即可。HBase安装时有三种模式：单机模式、伪分布式模式和分布式模式。本教程采用伪分布式安装。
+安装好了伪分布式模式的HBase以后，我们可以在里面创建一个student表。
+请登录Linux系统，打开一个终端（可以使用快捷方式Ctrl+Alt+T组合键打开终端），因为HBase是伪分布式模式，需要调用HDFS，所以，请首先在终端中输入下面命令启动Hadoop：
+
+    cd /usr/local/hadoop
+    ./sbin/start-all.sh
+
+启动完成以后，一定要输入jps命令查看是否启动成功：
+
+    jps
+
+运行jps命令以后，应该可以看到以下几个进程：
+
+2375 SecondaryNameNode
+2169 DataNode
+2667 NodeManager
+2972 Jps
+2045 NameNode
+2541 ResourceManager
+
+如果少了其中一个进程，说明启动失败。
+下面就可以启动HBase，命令如下：
+
+cd /usr/local/hbase
+./bin/start-hbase.sh //启动HBase
+./bin/hbase shell  //启动hbase shell
+
+这样就可以进入hbase shell命令提示符状态。下面我们在HBase数据库中创建student表（注意：在关系型数据库MySQL中，需要首先创建数据库，然后再创建表，但是，在HBase数据库中，不需要创建数据库，只要直接创建表就可以）：
+
+    hbase> list
+
+用list命令可以显示当前HBase数据库中有哪些已经创建好的表，如果里面已经有一个名称为student的表，请使用如下命令删除（如果不存在student表，就不用执行下面的删除命令了）：
+
+    hbase> disable 'student'
+    hbase> drop 'student'
+
+
+下面让我们一起来创建一个student表，我们要在这个表中录入如下数据：
+
++------+----------+--------+------+
+| id   | name     | gender | age  |
++------+----------+--------+------+
+|    1 | Xueqian  | F      |   23 |
+|    2 | Weiliang | M      |   24 |
++------+----------+--------+------+
+
+我们可以在hbase shell中使用下面命令创建：
+
+    hbase>  create 'student','info'
+
+
+你可以发现，我们在创建student表的create命令中，命令后面首先跟上表名称’student’，然后，再跟上列族名称’info’，这个列族’info’中包含三个列’name’,’gender’,’age’。你会发现，好像没有’id’字段，这是因为HBase的表中会有一个系统默认的属性作为行键，无需自行创建，默认把put命令操作中跟在表名后的第一个字段作为行健。
+创建完“student”表后，可通过describe命令查看“student”表的基本信息：
+
+    hbase> describe 'student'
+
+
+下面，我们要把student表的两个样例记录输入到student表中。但是，HBase是列族数据库，原理和关系数据库不同，操作方法也不同。如果要了解HBase的技术原理和使用方法，可以参考厦门大学数据库实验室的在线课程《HBase数据库》。
+如果没有时间学习HBase数据库细节知识，也可以直接按照下面的内容跟着操作就可以了。
+HBase中用put命令添加数据，注意：一次只能为一个表的一行数据的一个列（也就是一个单元格，单元格是HBase中的概念）添加一个数据，所以直接用shell命令插入数据效率很低，在实际应用中，一般都是利用编程操作数据。因为这里只要插入两条学生记录，所以，我们可以用shell命令手工插入。
+
+    //首先录入student表的第一个学生记录
+    hbase> put 'student','1','info:name','Xueqian'
+    hbase> put 'student','1','info:gender','F'
+    hbase> put 'student','1','info:age','23'
+    //然后录入student表的第二个学生记录
+    hbase> put 'student','2','info:name','Weiliang'
+    hbase> put 'student','2','info:gender','M'
+    hbase> put 'student','2','info:age','24'
+
+
+数据录入结束后，可以用下面命令查看刚才已经录入的数据：
+
+    //如果每次只查看一行，就用下面命令
+    hbase> get 'student','1'
+    //如果每次查看全部数据，就用下面命令
+    hbase> scan 'student'
+
+可以得到如下结果：
+
+ROW                                    COLUMN+CELL                                                                                                   
+ 1                                     column=info:age, timestamp=1479640712163, value=23                                                            
+ 1                                     column=info:gender, timestamp=1479640704522, value=F                                                          
+ 1                                     column=info:name, timestamp=1479640696132, value=Xueqian                                                      
+ 2                                     column=info:age, timestamp=1479640752474, value=24                                                            
+ 2                                     column=info:gender, timestamp=1479640745276, value=M                                                          
+ 2                                     column=info:name, timestamp=1479640732763, value=Weiliang                                                     
+2 row(s) in 0.1610 seconds
+
+二.配置Spark
+
+在开始编程操作HBase数据库之前，需要对做一些准备工作。
+（1）请新建一个终端，执行下面命令，把HBase的lib目录下的一些jar文件拷贝到Spark中，这些都是编程时需要引入的jar包，需要拷贝的jar文件包括：所有hbase开头的jar文件、guava-12.0.1.jar、htrace-core-3.1.0-incubating.jar和protobuf-java-2.5.0.jar，可以打开一个终端按照以下命令来操作：
+
+然后，设置Spark的spark-env.sh文件，告诉Spark可以在哪个路径下找到HBase相关的jar文件，如下：
+
+cd /usr/local/spark/conf
+vim spark-env.sh
+
+需要注意：在Spark 2.0版本上缺少相关把hbase的数据转换python可读取的jar包，需要我们另行下载。
+打开spark-example-1.6.0.jar下载jar包
+然后执行如下命令
+
+    mkdir -p /usr/local/spark/jars/hbase/
+    mv ~/下载/spark-examples* /usr/local/spark/jars/hbase/
+
+
+使用vim编辑器打开spark-env.sh文件以后，可以在文件最前面增加下面一行内容：
+
+export SPARK_DIST_CLASSPATH=$(/usr/local/hadoop/bin/hadoop classpath):$(/usr/local/hbase/bin/hbase classpath):/usr/local/spark/jars/hbase/*
+
+只有这样，后面编译和运行过程才不会出错。
+编写程序读取HBase数据
+
+如果要让Spark读取HBase，就需要使用SparkContext提供的newAPIHadoopRDD API将表的内容以RDD的形式加载到Spark中。
+请在Linux系统中打开一个终端，然后执行以下命令：
+
+    pyspark
+
+启动pyspark
+然后输入如下代码：
+
+    host = 'localhost'
+    table = 'student'
+    conf = {"hbase.zookeeper.quorum": host, "hbase.mapreduce.inputtable": table}
+    keyConv = "org.apache.spark.examples.pythonconverters.ImmutableBytesWritableToStringConverter"
+    valueConv = "org.apache.spark.examples.pythonconverters.HBaseResultToStringConverter"
+    hbase_rdd = sc.newAPIHadoopRDD("org.apache.hadoop.hbase.mapreduce.TableInputFormat","org.apache.hadoop.hbase.io.ImmutableBytesWritable","org.apache.hadoop.hbase.client.Result",keyConverter=keyConv,valueConverter=valueConv,conf=conf)
+    count = hbase_rdd.count()
+    hbase_rdd.cache()
+    output = hbase_rdd.collect()
+    for (k, v) in output:
+            print (k, v)
+     
+     
+    1 {"qualifier" : "age", "timestamp" : "1512549772307", "columnFamily" : "info", "row" : "1", "type" : "Put", "value" : "23"}
+    {"qualifier" : "gender", "timestamp" : "1512549765192", "columnFamily" : "info", "row" : "1", "type" : "Put", "value" : "F"}
+    {"qualifier" : "name", "timestamp" : "1512549757406", "columnFamily" : "info", "row" : "1", "type" : "Put", "value" : "Xueqian"}
+    2 {"qualifier" : "age", "timestamp" : "1512549829145", "columnFamily" : "info", "row" : "2", "type" : "Put", "value" : "24"}
+    {"qualifier" : "gender", "timestamp" : "1512549790422", "columnFamily" : "info", "row" : "2", "type" : "Put", "value" : "M"}
+    {"qualifier" : "name", "timestamp" : "1512549780044", "columnFamily" : "info", "row" : "2", "type" : "Put", "value" : "Weiliang"}               
+
+编写程序向HBase写入数据
+
+启动pyspark，然后在pyspark shell中输入如下代码：
+
+    host = 'localhost'
+    table = 'student'
+    keyConv = "org.apache.spark.examples.pythonconverters.StringToImmutableBytesWritableConverter"
+    valueConv = "org.apache.spark.examples.pythonconverters.StringListToPutConverter"
+    conf = {"hbase.zookeeper.quorum": host,"hbase.mapred.outputtable": table,"mapreduce.outputformat.class": "org.apache.hadoop.hbase.mapreduce.TableOutputFormat","mapreduce.job.output.key.class": "org.apache.hadoop.hbase.io.ImmutableBytesWritable","mapreduce.job.output.value.class": "org.apache.hadoop.io.Writable"}
+     
+    rawData = ['3,info,name,Rongcheng','4,info,name,Guanhua']
+    // ( rowkey , [ row key , column family , column name , value ] )
+    sc.parallelize(rawData).map(lambda x: (x[0],x.split(','))).saveAsNewAPIHadoopDataset(conf=conf,keyConverter=keyConv,valueConverter=valueConv)

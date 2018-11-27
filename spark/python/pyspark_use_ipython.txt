@@ -1,0 +1,4 @@
+pyspark 使用ipython
+
+vi ~/.bashrc
+export PYSPARK_DRIVER_PYTHON=ipython
