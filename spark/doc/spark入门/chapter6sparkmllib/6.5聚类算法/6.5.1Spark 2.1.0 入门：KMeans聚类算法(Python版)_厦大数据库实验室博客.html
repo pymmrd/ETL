@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark 2.1.0 入门：KMeans聚类算法(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Python：生成器" href="http://dblab.xmu.edu.cn/blog/1778-2/">
+<link rel="next" title="Spark 2.1.0 入门：高斯混合模型(GMM)聚类算法(Python版)" href="http://dblab.xmu.edu.cn/blog/1780-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1779-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1779-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1779 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1779" class="post-1779 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark 2.1.0 入门：KMeans聚类算法(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-18T22:12:10+00:00">2017年12月18日</time> <span class="updated">(updated: <time class="updated" datetime="2017-12-19T09:48:39+00:00">2017年12月19日</time>)</span></span><span class="views" id="views"><i class="fa fa-eye"></i> 2724</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！</p>
+<p><a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p>KMeans 是一个迭代求解的聚类算法，其属于 划分（Partitioning） 型的聚类方法，即首先创建K个划分，然后迭代地将样本从一个划分转移到另一个划分来改善最终聚类的质量。<br>
+<span id="more-1779"></span><br>
+ML包下的KMeans方法位于org.apache.spark.ml.clustering包下，其过程大致如下：</p>
+<p>1.根据给定的k值，选取k个样本点作为初始划分中心；<br>
+2.计算所有样本点到每一个划分中心的距离，并将所有样本点划分到距离最近的划分中心；<br>
+3.计算每个划分中样本点的平均值，将其作为新的中心；</p>
+<p>循环进行2~3步直至达到最大迭代次数，或划分中心的变化小于某一预定义阈值<br>
+显然，初始划分中心的选取在很大程度上决定了最终聚类的质量，和MLlib包一样，ML包内置的KMeans类也提供了名为 KMeans|| 
+的初始划分中心选择方法，它是著名的 KMeans++ 
+方法的并行化版本，其思想是令初始聚类中心尽可能的互相远离，具体实现细节可以参见斯坦福大学的B Bahmani在PVLDB上的论文Scalable
+ K-Means++，这里不再赘述。</p>
+<p>与MLlib版本的Kmeans教程相同，本文亦使用UCI数据集中的鸢尾花数据Iris进行实验，它可以在iris获取，Iris数据的样本容量为150，有四个实数值的特征，分别代表花朵四个部位的尺寸，以及该样本对应鸢尾花的亚种类型（共有3种亚种类型）<br>
+，如下所示：</p>
+<pre><code>5.1,3.5,1.4,0.2,setosa
+...
+5.4,3.0,4.5,1.5,versicolor
+...
+7.1,3.0,5.9,2.1,virginica
+...
+</code></pre>
+<p>在使用前，引入需要的包：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">sql </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">Row</span></li><li class="L1"><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">ml</span><span class="pun">.</span><span class="pln">clustering </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">KMeans</span><span class="pun">,</span><span class="typ">KMeansModel</span></li><li class="L2"><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">ml</span><span class="pun">.</span><span class="pln">linalg </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">Vectors</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>下文中，我们默认名为spark的SparkSession已经创建。</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">rawData </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/iris.txt"</span><span class="pun">)</span></li><li class="L1"><span class="kwd">def</span><span class="pln"> f</span><span class="pun">(</span><span class="pln">x</span><span class="pun">):</span></li><li class="L2"><span class="pln">    rel </span><span class="pun">=</span><span class="pln"> </span><span class="pun">{}</span></li><li class="L3"><span class="pln">    rel</span><span class="pun">[</span><span class="str">'features'</span><span class="pun">]</span><span class="pln"> </span><span class="pun">=</span><span class="pln"> </span><span class="typ">Vectors</span><span class="pun">.</span><span class="pln">dense</span><span class="pun">(</span><span class="pln">float</span><span class="pun">(</span><span class="pln">x</span><span class="pun">[</span><span class="lit">0</span><span class="pun">]),</span><span class="pln">float</span><span class="pun">(</span><span class="pln">x</span><span class="pun">[</span><span class="lit">1</span><span class="pun">]),</span><span class="pln">float</span><span class="pun">(</span><span class="pln">x</span><span class="pun">[</span><span class="lit">2</span><span class="pun">]),</span><span class="pln">float</span><span class="pun">(</span><span class="pln">x</span><span class="pun">[</span><span class="lit">3</span><span class="pun">]))</span></li><li class="L4"><span class="pln">    </span><span class="kwd">return</span><span class="pln"> rel</span></li><li class="L5"><span class="pln">&nbsp;</span></li><li class="L6"><span class="pln">df </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/iris.txt"</span><span class="pun">).</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> line</span><span class="pun">:</span><span class="pln"> line</span><span class="pun">.</span><span class="pln">split</span><span class="pun">(</span><span class="str">','</span><span class="pun">)).</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> p</span><span class="pun">:</span><span class="pln"> </span><span class="typ">Row</span><span class="pun">(**</span><span class="pln">f</span><span class="pun">(</span><span class="pln">p</span><span class="pun">))).</span><span class="pln">toDF</span><span class="pun">()</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>在得到数据后，我们即可通过ML包的固有流程：创建Estimator并调用其fit()方法来生成相应的Transformer对象，很显然，在这里KMeans类是Estimator，而用于保存训练后模型的KMeansModel类则属于Transformer：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">kmeansmodel </span><span class="pun">=</span><span class="pln"> </span><span class="typ">KMeans</span><span class="pun">().</span><span class="pln">setK</span><span class="pun">(</span><span class="lit">3</span><span class="pun">).</span><span class="pln">setFeaturesCol</span><span class="pun">(</span><span class="str">'features'</span><span class="pun">).</span><span class="pln">setPredictionCol</span><span class="pun">(</span><span class="str">'prediction'</span><span class="pun">).</span><span class="pln">fit</span><span class="pun">(</span><span class="pln">df</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>与MLlib版本类似，ML包下的KMeans方法也有Seed（随机数种子）、Tol（收敛阈值）、K（簇个数）、MaxIter（最大迭代次
+数）、initMode（初始化方式）、initStep（KMeans||方法的步数）等参数可供设置，和其他的ML框架算法一样，用户可以通过相应的
+setXXX()方法来进行设置，或以ParamMap的形式传入参数，这里为了简介期间，使用setXXX()方法设置了参数K，其余参数均采用默认
+值。</p>
+<p>与MLlib中的实现不同，KMeansModel作为一个Transformer，不再提供predict()样式的方法，而是提供了一致性的transform()方法，用于将存储在DataFrame中的给定数据集进行整体处理，生成带有预测簇标签的数据集：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">results </span><span class="pun">=</span><span class="pln"> kmeansmodel</span><span class="pun">.</span><span class="pln">transform</span><span class="pun">(</span><span class="pln">df</span><span class="pun">).</span><span class="pln">collect</span><span class="pun">()</span></li><li class="L1"><span class="kwd">for</span><span class="pln"> item </span><span class="kwd">in</span><span class="pln"> results</span><span class="pun">:</span></li><li class="L2"><span class="pun">...</span><span class="pln">     </span><span class="kwd">print</span><span class="pun">(</span><span class="pln">str</span><span class="pun">(</span><span class="pln">item</span><span class="pun">[</span><span class="lit">0</span><span class="pun">])+</span><span class="str">' is predcted as cluster'</span><span class="pun">+</span><span class="pln"> str</span><span class="pun">(</span><span class="pln">item</span><span class="pun">[</span><span class="lit">1</span><span class="pun">]))</span></li><li class="L3"><span class="pun">...</span><span class="pln"> </span></li><li class="L4"><span class="pun">[</span><span class="lit">5.1</span><span class="pun">,</span><span class="lit">3.5</span><span class="pun">,</span><span class="lit">1.4</span><span class="pun">,</span><span class="lit">0.2</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L5"><span class="pun">[</span><span class="lit">4.9</span><span class="pun">,</span><span class="lit">3.0</span><span class="pun">,</span><span class="lit">1.4</span><span class="pun">,</span><span class="lit">0.2</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L6"><span class="pun">[</span><span class="lit">4.7</span><span class="pun">,</span><span class="lit">3.2</span><span class="pun">,</span><span class="lit">1.3</span><span class="pun">,</span><span class="lit">0.2</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L7"><span class="pun">[</span><span class="lit">4.6</span><span class="pun">,</span><span class="lit">3.1</span><span class="pun">,</span><span class="lit">1.5</span><span class="pun">,</span><span class="lit">0.2</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L8"><span class="pun">[</span><span class="lit">5.0</span><span class="pun">,</span><span class="lit">3.6</span><span class="pun">,</span><span class="lit">1.4</span><span class="pun">,</span><span class="lit">0.2</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L9"><span class="pun">[</span><span class="lit">5.4</span><span class="pun">,</span><span class="lit">3.9</span><span class="pun">,</span><span class="lit">1.7</span><span class="pun">,</span><span class="lit">0.4</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L0"><span class="pun">[</span><span class="lit">4.6</span><span class="pun">,</span><span class="lit">3.4</span><span class="pun">,</span><span class="lit">1.4</span><span class="pun">,</span><span class="lit">0.3</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L1"><span class="pun">[</span><span class="lit">5.0</span><span class="pun">,</span><span class="lit">3.4</span><span class="pun">,</span><span class="lit">1.5</span><span class="pun">,</span><span class="lit">0.2</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L2"><span class="pun">[</span><span class="lit">4.4</span><span class="pun">,</span><span class="lit">2.9</span><span class="pun">,</span><span class="lit">1.4</span><span class="pun">,</span><span class="lit">0.2</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L3"><span class="pun">[</span><span class="lit">4.9</span><span class="pun">,</span><span class="lit">3.1</span><span class="pun">,</span><span class="lit">1.5</span><span class="pun">,</span><span class="lit">0.1</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L4"><span class="pun">[</span><span class="lit">5.4</span><span class="pun">,</span><span class="lit">3.7</span><span class="pun">,</span><span class="lit">1.5</span><span class="pun">,</span><span class="lit">0.2</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L5"><span class="pun">[</span><span class="lit">4.8</span><span class="pun">,</span><span class="lit">3.4</span><span class="pun">,</span><span class="lit">1.6</span><span class="pun">,</span><span class="lit">0.2</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L6"><span class="pun">[</span><span class="lit">4.8</span><span class="pun">,</span><span class="lit">3.0</span><span class="pun">,</span><span class="lit">1.4</span><span class="pun">,</span><span class="lit">0.1</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L7"><span class="pun">[</span><span class="lit">4.3</span><span class="pun">,</span><span class="lit">3.0</span><span class="pun">,</span><span class="lit">1.1</span><span class="pun">,</span><span class="lit">0.1</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li><li class="L8"><span class="pun">[</span><span class="lit">5.8</span><span class="pun">,</span><span class="lit">4.0</span><span class="pun">,</span><span class="lit">1.2</span><span class="pun">,</span><span class="lit">0.2</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> predcted </span><span class="kwd">as</span><span class="pln"> cluster1</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>也可以通过KMeansModel类自带的clusterCenters属性获取到模型的所有聚类中心情况：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">results2 </span><span class="pun">=</span><span class="pln"> kmeansmodel</span><span class="pun">.</span><span class="pln">clusterCenters</span><span class="pun">()</span></li><li class="L1"><span class="kwd">for</span><span class="pln"> item </span><span class="kwd">in</span><span class="pln"> results2</span><span class="pun">:</span></li><li class="L2"><span class="pun">...</span><span class="pln">     </span><span class="kwd">print</span><span class="pun">(</span><span class="pln">item</span><span class="pun">)</span></li><li class="L3"><span class="pun">...</span><span class="pln"> </span></li><li class="L4"><span class="pun">[</span><span class="pln"> </span><span class="lit">5.9016129</span><span class="pln">   </span><span class="lit">2.7483871</span><span class="pln">   </span><span class="lit">4.39354839</span><span class="pln">  </span><span class="lit">1.43387097</span><span class="pun">]</span></li><li class="L5"><span class="pun">[</span><span class="pln"> </span><span class="lit">5.006</span><span class="pln">  </span><span class="lit">3.418</span><span class="pln">  </span><span class="lit">1.464</span><span class="pln">  </span><span class="lit">0.244</span><span class="pun">]</span></li><li class="L6"><span class="pun">[</span><span class="pln"> </span><span class="lit">6.85</span><span class="pln">        </span><span class="lit">3.07368421</span><span class="pln">  </span><span class="lit">5.74210526</span><span class="pln">  </span><span class="lit">2.07105263</span><span class="pun">]</span></li><li class="L7"><span class="pln">&nbsp;</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>与MLlib下的实现相同，KMeansModel类也提供了计算 集合内误差平方和（Within Set Sum of Squared 
+Error, WSSSE) 的方法来度量聚类的有效性，在真实K值未知的情况下，该值的变化可以作为选取合适K值的一个重要参考：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">kmeansmodel</span><span class="pun">.</span><span class="pln">computeCost</span><span class="pun">(</span><span class="pln">data</span><span class="pun">)</span></li><li class="L1"><span class="lit">78.94084142614622</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1779-2/" title="Spark 2.1.0 入门：KMeans聚类算法(Python版)">http://dblab.xmu.edu.cn/blog/1779-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="6.5.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9AKMeans%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

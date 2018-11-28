@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark 2.1.0 入门：分类与回归_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Spark 2.1.0 入门：特征选取–卡方选择器(Python版)" href="http://dblab.xmu.edu.cn/blog/1771-2/">
+<link rel="next" title="Spark2.1.0入门：逻辑斯蒂回归分类器(Python版)" href="http://dblab.xmu.edu.cn/blog/1773-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1772-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1772-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1772 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1772" class="post-1772 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark 2.1.0 入门：分类与回归</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-18T14:49:53+00:00">2017年12月18日</time> <span class="updated">(updated: <time class="updated" datetime="2018-01-08T11:11:33+00:00">2018年1月8日</time>)</span></span><span class="views" id="views"><i class="fa fa-eye"></i> 1044</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p><span id="more-1772"></span></p>
+<h1>分类算法概述</h1>
+<p>分类是一种重要的机器学习和数据挖掘技术。分类的目的是根据数据集的特点构造一个分类函数或分类模型(也常常称作分类器)，该模型能把未知类别的样本映射到给定类别中的一种技术。</p>
+<p>分类的具体规则可描述如下：给定一组训练数据的集合T(Training set)，T的每一条记录包含若干条属性（Features）组成一个特征向量，用矢量</p>
+<p class="ql-center-displayed-equation" style="line-height: 18px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex_004.svg" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[x=({x_1,x_2,.., x_n})\]" title="Rendered by QuickLaTeX.com" width="135" height="18"></p>
+<p>表示。</p>
+<p class="ql-center-displayed-equation" style="line-height: 10px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex_003.svg" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[x_i\]" title="Rendered by QuickLaTeX.com" width="15" height="10"></p>
+<p>可以有不同的值域，当一属性的值域为连续域时，该属性为连续属性(Numerical Attribute)，否则为离散属性(Discrete Attribute)。用</p>
+<p class="ql-center-displayed-equation" style="line-height: 16px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex.svg" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[C=c_1,c_2,.. c_k\]" title="Rendered by QuickLaTeX.com" width="109" height="16"></p>
+<p>表示类别属性，即数据集有k个不同的类别。那么，T就隐含了一个从矢量X到类别属性C的映射函数：</p>
+<p class="ql-center-displayed-equation" style="line-height: 18px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex_002.svg" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[f(X)\mapsto C\]" title="Rendered by QuickLaTeX.com" width="82" height="18"></p>
+<p>。分类的目的就是分析输入数据，通过在训练集中的数据表现出来的特性，为每一个类找到一种准确的描述或者模型，采用该种方法(模型)将隐含函数表示出来。</p>
+<p>构造分类模型的过程一般分为训练和测试两个阶段。在构造模型之前，将数据集随机地分为训练数据集和测试数据集。先使用训练数据集来构造分类模型，然
+后使用测试数据集来评估模型的分类准确率。如果认为模型的准确率可以接受，就可以用该模型对其它数据元组进分类。一般来说，测试阶段的代价远低于训练阶
+段。</p>
+<h1>mllib分类算法</h1>
+<p>分类算法基于不同的思想，算法也不尽相同，例如支持向量机SVM、决策树算法、贝叶斯算法、KNN算法等。spark.mllib包支持各种分类方法，主要包含 <a href="http://en.wikipedia.org/wiki/Binary_classification" target="_blank">二分类</a>， <a href="http://en.wikipedia.org/wiki/Multiclass_classification" target="_blank">多分类</a>和 <a href="http://en.wikipedia.org/wiki/Regression_analysis" target="_blank">回归分析</a>。下表列出了每种类型的问题支持的算法。<br>
+<img src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/-2016-12-12-8.png" alt=""><br>
+其中spark.mllib包支持的算法较为完善，也正逐步迁移到spark.ml包中。本节将介绍spark.ml包中一些典型的分类算法。</p>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1772-2/" title="Spark 2.1.0 入门：分类与回归">http://dblab.xmu.edu.cn/blog/1772-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="6.4.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E5%88%86%E7%B1%BB%E4%B8%8E%E5%9B%9E%E5%BD%92_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

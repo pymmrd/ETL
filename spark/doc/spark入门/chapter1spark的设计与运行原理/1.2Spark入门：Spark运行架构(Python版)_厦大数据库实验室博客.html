@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark入门：Spark运行架构(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Spark简介(Python版)" href="http://dblab.xmu.edu.cn/blog/1710-2/">
+<link rel="next" title="Spark入门：Spark的部署模式(Python版)" href="http://dblab.xmu.edu.cn/blog/1713-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1711-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1711-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1711 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1711" class="post-1711 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark入门：Spark运行架构(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-06T11:37:19+00:00">2017年12月6日</time></span><span class="views" id="views"><i class="fa fa-eye"></i> 4918</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载。版权所有，侵权必究！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p>本节首先介绍Spark的基本概念和架构设计方法，然后介绍Spark运行基本流程。<br>
+<span id="more-1711"></span></p>
+<h1>基本概念</h1>
+<p>在具体讲解Spark运行架构之前，需要先了解几个重要的概念：<br>
+*  RDD：是弹性分布式数据集（Resilient Distributed Dataset）的简称，是分布式内存的一个抽象概念，提供了一种高度受限的共享内存模型；<br>
+*  DAG：是Directed Acyclic Graph（有向无环图）的简称，反映RDD之间的依赖关系；<br>
+*  Executor：是运行在工作节点（Worker Node）上的一个进程，负责运行任务，并为应用程序存储数据；<br>
+*  应用：用户编写的Spark应用程序；<br>
+*  任务：运行在Executor上的工作单元；<br>
+*  作业：一个作业包含多个RDD及作用于相应RDD上的各种操作；<br>
+*  阶段：是作业的基本调度单位，一个作业会分为多组任务，每组任务被称为“阶段”，或者也被称为“任务集”。</p>
+<h1>架构设计</h1>
+<p>如图9-5所示，Spark运行架构包括集群资源管理器（Cluster Manager）、运行作业任务的工作节点（Worker 
+Node）、每个应用的任务控制节点（Driver）和每个工作节点上负责具体任务的执行进程（Executor）。其中，集群资源管理器可以是
+Spark自带的资源管理器，也可以是YARN或Mesos等资源管理框架。<br>
+与Hadoop MapReduce计算框架相比，Spark所采用的Executor有两个优点：一是利用多线程来执行具体的任务（Hadoop 
+MapReduce采用的是进程模型），减少任务的启动开销；二是Executor中有一个BlockManager存储模块，会将内存和磁盘共同作为存
+储设备，当需要多轮迭代计算时，可以将中间结果存储到这个存储模块里，下次需要时，就可以直接读该存储模块里的数据，而不需要读写到HDFS等文件系统
+里，因而有效减少了IO开销；或者在交互式查询场景下，预先将表缓存到该存储系统上，从而可以提高读写IO性能。</p>
+<p><img src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-5-Spark.jpg" alt=""><span class="img-caption"></span></p>
+<p>图9-5 Spark运行架构</p>
+<p>总体而言，如图9-6所示，在Spark中，一个应用（Application）由一个任务控制节点（Driver）和若干个作业（Job）构成，
+一个作业由多个阶段（Stage）构成，一个阶段由多个任务（Task）组成。当执行一个应用时，任务控制节点会向集群管理器（Cluster 
+Manager）申请资源，启动Executor，并向Executor发送应用程序代码和文件，然后在Executor上执行任务，运行结束后，执行结
+果会返回给任务控制节点，或者写到HDFS或者其他数据库中。</p>
+<p><img src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-6-Spark.jpg" alt=""><span class="img-caption"></span></p>
+<p>图9-6 Spark中各种概念之间的相互关系</p>
+<h1>Spark运行基本流程</h1>
+<p>如图9-7 所示，Spark的基本运行流程如下：<br>
+（1）当一个Spark应用被提交时，首先需要为这个应用构建起基本的运行环境，即由任务控制节点（Driver）创建一个SparkContext，由
+SparkContext负责和资源管理器（Cluster 
+Manager）的通信以及进行资源的申请、任务的分配和监控等。SparkContext会向资源管理器注册并申请运行Executor的资源；<br>
+（2）资源管理器为Executor分配资源，并启动Executor进程，Executor运行情况将随着“心跳”发送到资源管理器上；<br>
+（3）SparkContext根据RDD的依赖关系构建DAG图，DAG图提交给DAG调度器（DAGScheduler）进行解析，将DAG图分解成
+多个“阶段”（每个阶段都是一个任务集），并且计算出各个阶段之间的依赖关系，然后把一个个“任务集”提交给底层的任务调度器
+（TaskScheduler）进行处理；Executor向SparkContext申请任务，任务调度器将任务分发给Executor运行，同
+时，SparkContext将应用程序代码发放给Executor；<br>
+（4）任务在Executor上运行，把执行结果反馈给任务调度器，然后反馈给DAG调度器，运行完毕后写入数据并释放所有资源。</p>
+<p><img src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-7-Spark.jpg" alt=""><br>
+图9-7 Spark运行基本流程图</p>
+<p>总体而言，Spark运行架构具有以下特点：<br>
+（1）每个应用都有自己专属的Executor进程，并且该进程在应用运行期间一直驻留。Executor进程以多线程的方式运行任务，减少了多进程任务频繁的启动开销，使得任务执行变得非常高效和可靠；<br>
+（2）Spark运行过程与资源管理器无关，只要能够获取Executor进程并保持通信即可；<br>
+（3）Executor上有一个BlockManager存储模块，类似于键值存储系统（把内存和磁盘共同作为存储设备），在处理迭代计算任务时，不需要
+把中间结果写入到HDFS等文件系统，而是直接放在这个存储系统上，后续有需要时就可以直接读取；在交互式查询场景下，也可以把表提前缓存到这个存储系统
+上，提高读写IO性能；<br>
+（4）任务采用了数据本地性和推测执行等优化机制。数据本地性是尽量将计算移到数据所在的节点上进行，即“计算向数据靠拢”，因为移动计算比移动数据所占
+的网络资源要少得多。而且，Spark采用了延时调度机制，可以在更大的程度上实现执行过程优化。比如，拥有数据的节点当前正被其他的任务占用，那么，在
+这种情况下是否需要将数据移动到其他的空闲节点呢？答案是不一定。因为，如果经过预测发现当前节点结束当前任务的时间要比移动数据的时间还要少，那么，调
+度就会等待，直到当前节点可用。</p>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1711-2/" title="Spark入门：Spark运行架构(Python版)">http://dblab.xmu.edu.cn/blog/1711-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="1.2Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！" style="display: none;"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

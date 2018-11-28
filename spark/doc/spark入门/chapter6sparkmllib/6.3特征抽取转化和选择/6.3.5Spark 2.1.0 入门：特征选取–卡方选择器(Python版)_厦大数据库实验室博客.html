@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark 2.1.0 入门：特征选取–卡方选择器(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Spark2.1.0 入门：特征变换–标签和索引的转化(Python版)" href="http://dblab.xmu.edu.cn/blog/1770-2/">
+<link rel="next" title="Spark 2.1.0 入门：分类与回归" href="http://dblab.xmu.edu.cn/blog/1772-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1771-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1771-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1771 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1771" class="post-1771 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark 2.1.0 入门：特征选取–卡方选择器(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-18T14:41:31+00:00">2017年12月18日</time></span><span class="views" id="views"><i class="fa fa-eye"></i> 883</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p>特征选择（Feature Selection）指的是在特征向量中选择出那些“优秀”的特征，组成新的、更“精简”的特征向量的过程。它在高维数据分析中十分常用，可以剔除掉“冗余”和“无关”的特征，提升学习器的性能。<br>
+<span id="more-1771"></span><br>
+特征选择方法和分类方法一样，也主要分为有监督（Supervised）和无监督（Unsupervised）两种，卡方选择则是统计学上常用的一种有监
+督特征选择方法，它通过对特征和真实标签之间进行卡方检验，来判断该特征和真实标签的关联程度，进而确定是否对其进行选择。</p>
+<p>和ML库中的大多数学习方法一样，ML中的卡方选择也是以estimator+transformer的形式出现的，其主要由ChiSqSelector和ChiSqSelectorModel两个类来实现。</p>
+<p>在进行实验前，首先进行环境的设置。引入卡方选择器所需要使用的类：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">ml</span><span class="pun">.</span><span class="pln">feature </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">ChiSqSelector</span></li><li class="L1"><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">ml</span><span class="pun">.</span><span class="pln">linalg </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">Vectors</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>默认名为spark的SparkSession已经创建。</p>
+<p>随后，创造实验数据，这是一个具有三个样本，四个特征维度的数据集，标签有1，0两种，我们将在此数据集上进行卡方选择：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">df </span><span class="pun">=</span><span class="pln"> spark</span><span class="pun">.</span><span class="pln">createDataFrame</span><span class="pun">([</span></li><li class="L1"><span class="pln">    </span><span class="pun">(</span><span class="lit">7</span><span class="pun">,</span><span class="pln"> </span><span class="typ">Vectors</span><span class="pun">.</span><span class="pln">dense</span><span class="pun">([</span><span class="lit">0.0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0.0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">18.0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1.0</span><span class="pun">]),</span><span class="pln"> </span><span class="lit">1.0</span><span class="pun">,),</span></li><li class="L2"><span class="pln">    </span><span class="pun">(</span><span class="lit">8</span><span class="pun">,</span><span class="pln"> </span><span class="typ">Vectors</span><span class="pun">.</span><span class="pln">dense</span><span class="pun">([</span><span class="lit">0.0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1.0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">12.0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0.0</span><span class="pun">]),</span><span class="pln"> </span><span class="lit">0.0</span><span class="pun">,),</span></li><li class="L3"><span class="pln">    </span><span class="pun">(</span><span class="lit">9</span><span class="pun">,</span><span class="pln"> </span><span class="typ">Vectors</span><span class="pun">.</span><span class="pln">dense</span><span class="pun">([</span><span class="lit">1.0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0.0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">15.0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0.1</span><span class="pun">]),</span><span class="pln"> </span><span class="lit">0.0</span><span class="pun">,)],</span><span class="pln"> </span><span class="pun">[</span><span class="str">"id"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"features"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"clicked"</span><span class="pun">])</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>现在，用卡方选择进行特征选择器的训练，为了观察地更明显，我们设置只选择和标签关联性最强的一个特征可以通过numTopFeatures参数方法进行设置）：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">selector </span><span class="pun">=</span><span class="pln"> </span><span class="typ">ChiSqSelector</span><span class="pun">(</span><span class="pln">numTopFeatures</span><span class="pun">=</span><span class="lit">1</span><span class="pun">,</span><span class="pln"> featuresCol</span><span class="pun">=</span><span class="str">"features"</span><span class="pun">,</span></li><li class="L1"><span class="pln">                         outputCol</span><span class="pun">=</span><span class="str">"selectedFeatures"</span><span class="pun">,</span><span class="pln"> labelCol</span><span class="pun">=</span><span class="str">"clicked"</span><span class="pun">)</span></li><li class="L2"><span class="pln">&nbsp;</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>用训练出的模型对原数据集进行处理，可以看见，第三列特征被选出作为最有用的特征列：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">result </span><span class="pun">=</span><span class="pln"> selector</span><span class="pun">.</span><span class="pln">fit</span><span class="pun">(</span><span class="pln">df</span><span class="pun">).</span><span class="pln">transform</span><span class="pun">(</span><span class="pln">df</span><span class="pun">)</span></li><li class="L1"><span class="pln">result</span><span class="pun">.</span><span class="pln">show</span><span class="pun">()</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1771-2/" title="Spark 2.1.0 入门：特征选取–卡方选择器(Python版)">http://dblab.xmu.edu.cn/blog/1771-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="6.3.5Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E9%80%89%E5%8F%96%E2%80%93%E5%8D%A1%E6%96%B9%E9%80%89%E6%8B%A9%E5%99%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

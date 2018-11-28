@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark2.1.0+入门：Apache Kafka作为DStream数据源(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Spark2.1.0入门：RDD队列流（DStream）(Python版)" href="http://dblab.xmu.edu.cn/blog/1742-2/">
+<link rel="next" title="Python：高阶函数-map/reduce/filter" href="http://dblab.xmu.edu.cn/blog/1744-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1743-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1743-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1743 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1743" class="post-1743 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark2.1.0+入门：Apache Kafka作为DStream数据源(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-11T19:56:32+00:00">2017年12月11日</time> <span class="updated">(updated: <time class="updated" datetime="2017-12-12T11:07:17+00:00">2017年12月12日</time>)</span></span><span class="views" id="views"><i class="fa fa-eye"></i> 2768</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p>Kafka是非常流行的日志采集系统，可以作为DStream的高级数据源。<br>
+<span id="more-1743"></span></p>
+<h1>Kafka的安装和准备工作</h1>
+<p>关于Kafka的概念和安装方法，请参考厦门大学数据库实验室博客文章《<a href="http://dblab.xmu.edu.cn/blog/1096-2/" target="_blank">Kafka的安装和简单实例测试</a>》。
+在安装的时候，要注意，到Kafka官网下载安装文件时，一定要选择和自己电脑上已经安装的scala版本号一致才可以，本教程安装的Spark版本号是
+2.1.0，scala版本号是2.11，所以，一定要选择Kafka版本号是2.11开头的。比如，到Kafka官网中，可以下载安装文件
+Kafka_2.11-0.10.2.0.tgz，前面的2.11就是支持的scala版本号，后面的0.10.2.0是Kafka自身的版本号。<br>
+这里假设你已经根据这篇博客文章安装成功了Kafka。<br>
+下面，我们启动Kafka。<br>
+请登录Linux系统（本教程统一使用hadoop用户登录），打开一个终端，输入下面命令启动Zookeeper服务：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/kafka</span></li><li class="L1"><span class="pln">./bin/zookeeper-server-start.sh config/zookeeper.properties</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>注意，执行上面命令以后，终端窗口会返回一堆信息，然后就停住不动了，没有回到shell命令提示符状态，这时，千万不要错误认为死机了，而是
+Zookeeper服务器启动了，正在处于服务状态。所以，千万不要关闭这个终端窗口，一旦关闭，zookeeper服务就停止了，所以，不能关闭这个终
+端窗口。<br>
+请另外打开第二个终端，然后输入下面命令启动Kafka服务：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/kafka</span></li><li class="L1"><span class="pln">bin/kafka-server-start.sh config/server.properties</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>这样，Kafka就会在后台运行，即使你关闭了这个终端，Kafka也会一直在后台运行。不过，这样做，有时候我们往往就忘记了还有Kafa在后台运行，所以，建议暂时不要用&amp;。</p>
+<p>下面先测试一下Kafka是否可以正常使用。再另外打开第三个终端，然后输入下面命令创建一个自定义名称为“wordsendertest”的topic（关于什么是topic，请参考厦门大学数据库实验室博客文章《<a href="http://dblab.xmu.edu.cn/blog/1096-2/" target="_blank">Kafka的安装和简单实例测试</a>》）：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/kafka</span></li><li class="L1"><span class="pln">./bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic wordsendertest</span></li><li class="L2"><span class="pln">//这个topic叫wordsendertest，2181是zookeeper默认的端口号，partition是topic里面的分区数，replication-factor是备份的数量，在kafka集群中使用，这里单机版就不用备份了</span></li><li class="L3"><span class="pln">//可以用list列出所有创建的topics,来查看上面创建的topic是否存在</span></li><li class="L4"><span class="pln">./bin/kafka-topics.sh --list --zookeeper localhost:2181</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>这个名称为“wordsendertest”的topic，就是专门负责采集发送一些单词的。<br>
+下面，我们需要用producer来产生一些数据，请在当前终端内继续输入下面命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/kafka-console-producer.sh --broker-list localhost:9092 --topic wordsendertest</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>上面命令执行后，你就可以在当前终端内用键盘输入一些英文单词，比如我们可以输入：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">hello hadoop</span></li><li class="L1"><span class="pln">hello spark</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>这些单词就是数据源，这些单词会被Kafka捕捉到以后发送给消费者。我们现在可以启动一个消费者，来查看刚才producer产生的数据。请另外打开第四个终端，输入下面命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/kafka</span></li><li class="L1"><span class="pln">./bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic wordsendertest --from-beginning</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>可以看到，屏幕上会显示出如下结果，也就是刚才你在另外一个终端里面输入的内容：</p>
+<pre><code>hello hadoop
+hello spark
+</code></pre>
+<p>到这里，与Kafka相关的准备工作就顺利结束了。注意，现在可以把第四个终端关闭掉，第一个终端（正在运行Zookeeper服务）、第二个终端
+（正在运行Kafka服务）和第三个终端不要关闭，继续留着后面使用。如果记不住是哪个终端，那么所有这些终端窗口都不要关闭，要继续留着后面使用。</p>
+<h1>Spark准备工作</h1>
+<p>Kafka和Flume等高级输入源，需要依赖独立的库（jar文件）。按照我们前面安装好的Spark版本，这些jar包都不在里面，为了证明这一点，我们现在可以测试一下。请打开一个新的终端，然后启动pyspark：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark</span></li><li class="L1"><span class="pln">./bin/pyspark</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>根据Spark官网的说明，对于Spark2.1.0版本，如果要使用Kafka，则需要下载spark-streaming-kafka-0-8_2.11相关jar包。<br>
+现在请在Linux系统中，打开一个火狐浏览器，请点击这里访问<a href="http://mvnrepository.com/artifact/org.apache.spark/spark-streaming-kafka-0-8_2.11/2.1.0" target="_blank">Maven Repository</a>，
+里面有提供spark-streaming-kafka-0-8_2.11-2.1.0.jar文件的下载，其中，2.11表示scala的版
+本，2.1.0表示Spark版本号。下载后的文件会被默认保存在当前Linux登录用户的下载目录下，本教程统一使用hadoop用户名登录Linux
+系统，所以，文件下载后会被保存到“/home/hadoop/下载”目录下面。现在，我们就把这个文件复制到Spark目录的jars目录下。请新打开
+一个终端，输入下面命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark/jars</span></li><li class="L1"><span class="kwd">mkdir </span><span class="pln">kafka</span></li><li class="L2"><span class="kwd">cd </span><span class="pln">~</span></li><li class="L3"><span class="kwd">cd </span><span class="pln">下载</span></li><li class="L4"><span class="kwd">cp </span><span class="pln">./spark-streaming-kafka-0-8_2.11-2.1.0.jar /usr/local/spark/jars/kafka</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>这样，我们就把spark-streaming-kafka-0-8_2.11-2.1.0.jar文件拷贝到了“/usr/local/spark/jars/kafka”目录下。<br>
+同时，我们还要修改spark目录下conf/spark-env.sh文件,修改该文件下面的SPARK_DIST_CLASSPATH变量</p>
+<pre><code>export SPARK_DIST_CLASSPATH=$(/usr/local/hadoop/bin/hadoop classpath):$(/usr/local/hbase/bin/hbase classpath):/usr/local/spark/examples/jars/*:/usr/local/spark/jars/kafka/*:/usr/local/kafka/libs/*`
+</code></pre>
+<h1>编写Spark程序使用Kafka数据源</h1>
+<p>下面，我们就可以进行程序编写了。请新打开一个终端，然后，执行命令创建代码目录：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark/mycode</span></li><li class="L1"><span class="kwd">mkdir </span><span class="pln">kafka &amp;&amp; </span><span class="kwd">cd </span><span class="pln">kafka</span></li><li class="L2"><span class="kwd">vim </span><span class="pln">KafkaWordProducer.py</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>使用vim编辑器新建了KafkaWordCount.py，让它去进行词频统计。请在KafkaWordCount.py中输入以下代码：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">from</span><span class="pln"> __future__ </span><span class="kwd">import</span><span class="pln"> print_function</span></li><li class="L1"><span class="pln">&nbsp;</span></li><li class="L2"><span class="kwd">import</span><span class="pln"> sys</span></li><li class="L3"><span class="pln">&nbsp;</span></li><li class="L4"><span class="kwd">from</span><span class="pln"> pyspark </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">SparkContext</span></li><li class="L5"><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">streaming </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">StreamingContext</span></li><li class="L6"><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">streaming</span><span class="pun">.</span><span class="pln">kafka </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">KafkaUtils</span></li><li class="L7"><span class="pln">&nbsp;</span></li><li class="L8"><span class="kwd">if</span><span class="pln"> __name__ </span><span class="pun">==</span><span class="pln"> </span><span class="str">"__main__"</span><span class="pun">:</span></li><li class="L9"><span class="pln">    </span><span class="kwd">if</span><span class="pln"> len</span><span class="pun">(</span><span class="pln">sys</span><span class="pun">.</span><span class="pln">argv</span><span class="pun">)</span><span class="pln"> </span><span class="pun">!=</span><span class="pln"> </span><span class="lit">3</span><span class="pun">:</span></li><li class="L0"><span class="pln">        </span><span class="kwd">print</span><span class="pun">(</span><span class="str">"Usage: kafka_wordcount.py &lt;zk&gt; &lt;topic&gt;"</span><span class="pun">,</span><span class="pln"> file</span><span class="pun">=</span><span class="pln">sys</span><span class="pun">.</span><span class="pln">stderr</span><span class="pun">)</span></li><li class="L1"><span class="pln">        exit</span><span class="pun">(-</span><span class="lit">1</span><span class="pun">)</span></li><li class="L2"><span class="pln">&nbsp;</span></li><li class="L3"><span class="pln">    sc </span><span class="pun">=</span><span class="pln"> </span><span class="typ">SparkContext</span><span class="pun">(</span><span class="pln">appName</span><span class="pun">=</span><span class="str">"PythonStreamingKafkaWordCount"</span><span class="pun">)</span></li><li class="L4"><span class="pln">    ssc </span><span class="pun">=</span><span class="pln"> </span><span class="typ">StreamingContext</span><span class="pun">(</span><span class="pln">sc</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1</span><span class="pun">)</span></li><li class="L5"><span class="pln">&nbsp;</span></li><li class="L6"><span class="pln">    zkQuorum</span><span class="pun">,</span><span class="pln"> topic </span><span class="pun">=</span><span class="pln"> sys</span><span class="pun">.</span><span class="pln">argv</span><span class="pun">[</span><span class="lit">1</span><span class="pun">:]</span></li><li class="L7"><span class="pln">    kvs </span><span class="pun">=</span><span class="pln"> </span><span class="typ">KafkaUtils</span><span class="pun">.</span><span class="pln">createStream</span><span class="pun">(</span><span class="pln">ssc</span><span class="pun">,</span><span class="pln"> zkQuorum</span><span class="pun">,</span><span class="pln"> </span><span class="str">"spark-streaming-consumer"</span><span class="pun">,</span><span class="pln"> </span><span class="pun">{</span><span class="pln">topic</span><span class="pun">:</span><span class="pln"> </span><span class="lit">1</span><span class="pun">})</span></li><li class="L8"><span class="pln">    lines </span><span class="pun">=</span><span class="pln"> kvs</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> x</span><span class="pun">:</span><span class="pln"> x</span><span class="pun">[</span><span class="lit">1</span><span class="pun">])</span></li><li class="L9"><span class="pln">    counts </span><span class="pun">=</span><span class="pln"> lines</span><span class="pun">.</span><span class="pln">flatMap</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> line</span><span class="pun">:</span><span class="pln"> line</span><span class="pun">.</span><span class="pln">split</span><span class="pun">(</span><span class="str">" "</span><span class="pun">))</span><span class="pln"> \</span></li><li class="L0"><span class="pln">        </span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> word</span><span class="pun">:</span><span class="pln"> </span><span class="pun">(</span><span class="pln">word</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1</span><span class="pun">))</span><span class="pln"> \</span></li><li class="L1"><span class="pln">        </span><span class="pun">.</span><span class="pln">reduceByKey</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> a</span><span class="pun">,</span><span class="pln"> b</span><span class="pun">:</span><span class="pln"> a</span><span class="pun">+</span><span class="pln">b</span><span class="pun">)</span></li><li class="L2"><span class="pln">    counts</span><span class="pun">.</span><span class="pln">pprint</span><span class="pun">()</span></li><li class="L3"><span class="pln">&nbsp;</span></li><li class="L4"><span class="pln">    ssc</span><span class="pun">.</span><span class="pln">start</span><span class="pun">()</span></li><li class="L5"><span class="pln">    ssc</span><span class="pun">.</span><span class="pln">awaitTermination</span><span class="pun">()</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>然后执行如下命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">python3 ./KafkaWordProducer.py localhost:2181 wordsendertest</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>这里我们继续使用上面第三个终端的topic。请继续在第三个终端上输入信息，就能看到当前python执行终端下显示你刚才新输入的结果。<br>
+运行上面命令以后，就启动了词频统计功能，屏幕上就会显示如下类似信息：</p>
+<pre><code>-------------------------------------------
+Time: 2017-12-12 10:57:46
+-------------------------------------------
+('ts', 1)
+
+-------------------------------------------
+Time: 2017-12-12 10:57:47
+-------------------------------------------
+</code></pre>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1743-2/" title="Spark2.1.0+入门：Apache Kafka作为DStream数据源(Python版)">http://dblab.xmu.edu.cn/blog/1743-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="5.7Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9AApache%20Kafka%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！" style="display: none;"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

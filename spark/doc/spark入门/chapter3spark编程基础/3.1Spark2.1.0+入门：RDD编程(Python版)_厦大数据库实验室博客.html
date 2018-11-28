@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark2.1.0+入门：RDD编程(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="在集群上运行Spark应用程序(Python版)" href="http://dblab.xmu.edu.cn/blog/1699-2/">
+<link rel="next" title="Python入门教程" href="http://dblab.xmu.edu.cn/blog/python/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1700-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1700-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1700 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1700" class="post-1700 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark2.1.0+入门：RDD编程(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-04T15:36:37+00:00">2017年12月4日</time> <span class="updated">(updated: <time class="updated" datetime="2018-05-27T07:28:10+00:00">2018年5月27日</time>)</span></span><span class="views" id="views"><i class="fa fa-eye"></i> 5891</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p>通过前面几章的介绍，我们已经了解了Spark的运行架构和RDD设计与运行原理，并介绍了RDD操作的两种类型：转换操作和行动操作。<br>
+同时，我们前面通过一个简单的WordCount实例，也大概介绍了RDD的几种简单操作。现在我们介绍更多关于RDD编程的内容。<br>
+Spark中针对RDD的操作包括创建RDD、RDD转换操作和RDD行动操作。<br>
+<span id="more-1700"></span></p>
+<h1>RDD创建</h1>
+<p>RDD可以通过两种方式创建：<br>
+* 第一种：读取一个外部数据集。比如，从本地文件加载数据集，或者从HDFS文件系统、HBase、Cassandra、Amazon 
+S3等外部数据源中加载数据集。Spark可以支持文本文件、SequenceFile文件（Hadoop提供的 
+SequenceFile是一个由二进制序列化过的key/value的字节流组成的文本存储文件）和其他符合Hadoop 
+InputFormat格式的文件。<br>
+* 第二种：调用SparkContext的parallelize方法，在Driver中一个已经存在的集合（数组）上创建。</p>
+<h1>创建RDD之前的准备工作</h1>
+<p>在即将进行相关的实践操作之前，我们首先要登录Linux系统（本教程统一采用hadoop用户登录），然后，打开命令行“终端”，请按照下面的命令启动Hadoop中的HDFS组件：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd  </span><span class="pln">/usr/local/hadoop</span></li><li class="L1"><span class="pln">./sbin/start-dfs.sh</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>然后，我们按照下面命令启动pyspark：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark</span></li><li class="L1"><span class="pln">./bin/pyspark</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>然后，新建第二个“终端”，方法是，在前面已经建设的第一个终端窗口的左上方，点击“终端”菜单，在弹出的子菜单中选择“新建终端”，就可以打开第
+二个终端窗口，现在，我们切换到第二个终端窗口，在第二个终端窗口中，执行以下命令，进入之前已经创建好的“/usr/local/spark
+/mycode/”目录，在这个目录下新建rdd子目录，用来存放本章的代码和相关文件：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">usr/local/spark/mycode/</span></li><li class="L1"><span class="kwd">mkdir </span><span class="pln">rdd</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>然后，使用vim编辑器，在rdd目录下新建一个word.txt文件，你可以在文件里面随便输入几行英文语句用来测试。</p>
+<p>经过上面的准备工作以后，我们就可以开始创建RDD了。</p>
+<h1>从文件系统中加载数据创建RDD</h1>
+<p>Spark采用textFile()方法来从文件系统中加载数据创建RDD，该方法把文件的URI作为参数，这个URI可以是本地文件系统的地址，或者是分布式文件系统HDFS的地址，或者是Amazon S3的地址等等。<br>
+下面请切换回pyspark窗口，看一下如何从本地文件系统中加载数据：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/rdd/word.txt"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>下面看一下如何从HDFS文件系统中加载数据，这个在前面的第一个Spark应用程序：WordCount实例中已经讲过，这里再简单复习一下。<br>
+请根据前面的第一个Spark应用程序：WordCount实例中的内容介绍，把刚才在本地文件系统中的“/usr/local/spark
+/mycode/rdd/word.txt”上传到HDFS文件系统的hadoop用户目录下（注意：本教程统一使用hadoop用户登录Linux系
+统）。然后，在pyspark窗口中，就可以使用下面任意一条命令完成从HDFS文件系统中加载数据：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"hdfs://localhost:9000/user/hadoop/word.txt"</span><span class="pun">)</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"/user/hadoop/word.txt"</span><span class="pun">)</span></li><li class="L2"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"word.txt"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>注意，上面三条命令是完全等价的命令，只不过使用了不同的目录形式，你可以使用其中任意一条命令完成数据加载操作。</p>
+<p>在使用Spark读取文件时，需要说明以下几点：<br>
+（1）如果使用了本地文件系统的路径，那么，必须要保证在所有的worker节点上，也都能够采用相同的路径访问到该文件，比如，可以把该文件拷贝到每个worker节点上，或者也可以使用网络挂载共享文件系统。<br>
+（2）textFile()方法的输入参数，可以是文件名，也可以是目录，也可以是压缩文件等。比如，textFile(“/my/directory”), textFile(“/my/directory/<em>.txt”), and textFile(“/my/directory/</em>.gz”).<br>
+（3）textFile()方法也可以接受第2个输入参数（可选），用来指定分区的数目。默认情况下，Spark会为HDFS的每个block创建一个分
+区（HDFS中每个block默认是128MB）。你也可以提供一个比block数量更大的值作为分区数目，但是，你不能提供一个小于block数量的值
+作为分区数目。</p>
+<h1>通过并行集合（数组）创建RDD</h1>
+<p>可以调用SparkContext的parallelize方法，在Driver中一个已经存在的集合（数组）上创建。<br>
+下面请在pyspark中操作：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> nums </span><span class="pun">=</span><span class="pln"> </span><span class="pun">[</span><span class="lit">1</span><span class="pun">,</span><span class="lit">2</span><span class="pun">,</span><span class="lit">3</span><span class="pun">,</span><span class="lit">4</span><span class="pun">,</span><span class="lit">5</span><span class="pun">]</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> rdd </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">parallelize</span><span class="pun">(</span><span class="pln">nums</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>上面使用列表来创建。在Python中并没有数组这个基本数据类型，为了便于理解，你可以把列表当成其他语言的数组。</p>
+<h1>RDD操作</h1>
+<p>RDD被创建好以后，在后续使用过程中一般会发生两种操作：<br>
+*  转换（Transformation）： 基于现有的数据集创建一个新的数据集。<br>
+*  行动（Action）：在数据集上进行运算，返回计算值。</p>
+<h2>转换操作</h2>
+<p>对于RDD而言，每一次转换操作都会产生不同的RDD，供给下一个“转换”使用。转换得到的RDD是惰性求值的，也就是说，整个转换过程只是记录了转换的轨迹，并不会发生真正的计算，只有遇到行动操作时，才会发生真正的计算，开始从血缘关系源头开始，进行物理的转换操作。<br>
+下面列出一些常见的转换操作（Transformation API）：<br>
+* filter(func)：筛选出满足函数func的元素，并返回一个新的数据集<br>
+* map(func)：将每个元素传递到函数func中，并将结果返回为一个新的数据集<br>
+* flatMap(func)：与map()相似，但每个输入元素都可以映射到0或多个输出结果<br>
+* groupByKey()：应用于(K,V)键值对的数据集时，返回一个新的(K, Iterable)形式的数据集<br>
+* reduceByKey(func)：应用于(K,V)键值对的数据集时，返回一个新的(K, V)形式的数据集，其中的每个值是将每个key传递到函数func中进行聚合</p>
+<h2>行动操作</h2>
+<p>行动操作是真正触发计算的地方。Spark程序执行到行动操作时，才会执行真正的计算，从文件中加载数据，完成一次又一次转换操作，最终，完成行动操作得到结果。<br>
+下面列出一些常见的行动操作（Action API）：<br>
+* count() 返回数据集中的元素个数<br>
+* collect() 以数组的形式返回数据集中的所有元素<br>
+* first() 返回数据集中的第一个元素<br>
+* take(n) 以数组的形式返回数据集中的前n个元素<br>
+* reduce(func) 通过函数func（输入两个参数并返回一个值）聚合数据集中的元素<br>
+* foreach(func) 将数据集中的每个元素传递到函数func中运行*</p>
+<h1>惰性机制</h1>
+<p>这里给出一段简单的代码来解释Spark的惰性机制。</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"data.txt"</span><span class="pun">)</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lineLengths </span><span class="pun">=</span><span class="pln"> lines</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> s </span><span class="pun">:</span><span class="pln"> len</span><span class="pun">(</span><span class="pln">s</span><span class="pun">))</span></li><li class="L2"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> totalLength </span><span class="pun">=</span><span class="pln"> lineLengths</span><span class="pun">.</span><span class="pln">reduce</span><span class="pun">(</span><span class="pln"> </span><span class="kwd">lambda</span><span class="pln"> a</span><span class="pun">,</span><span class="pln"> b </span><span class="pun">:</span><span class="pln"> a </span><span class="pun">+</span><span class="pln"> b</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>上面第一行首先从外部文件data.txt中构建得到一个RDD，名称为lines，但是，由于textFile()方法只是一个转换操作，因此，这行代码执行后，不会立即把data.txt文件加载到内存中，这时的lines只是一个指向这个文件的指针。<br>
+第二行代码用来计算每行的长度（即每行包含多少个单词），同样，由于map()方法只是一个转换操作，这行代码执行后，不会立即计算每行的长度。<br>
+第三行代码的reduce()方法是一个“动作”类型的操作，这时，就会触发真正的计算。这时，Spark会把计算分解成多个任务在不同的机器上执行，每台机器运行位于属于它自己的map和reduce，最后把结果返回给Driver Program。</p>
+<h1>实例</h1>
+<p>下面我们举几个实例加深了解。<br>
+请在pyspark下执行下面操作。<br>
+下面是一个关于filter()操作的实例。</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/rdd/word.txt"</span><span class="pun">)</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines</span><span class="pun">.</span><span class="pln">filter</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> line </span><span class="pun">:</span><span class="pln"> </span><span class="str">"Spark"</span><span class="pln"> </span><span class="kwd">in</span><span class="pln"> line</span><span class="pun">).</span><span class="pln">count</span><span class="pun">()</span></li><li class="L2"><span class="lit">2</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>上面的代码中，lines就是一个RDD。lines.filter()会遍历lines中的每行文本，并对每行文本执行括号中的匿名函数，也就是
+执行Lamda表达式：line : “Spark” in 
+line，在执行Lamda表达式时，会把当前遍历到的这行文本内容赋值给参数line，然后，执行处理逻辑”Spark” in 
+line，也就是只有当改行文本包含“Spark”才满足条件，才会被放入到结果集中。最后，等到lines集合遍历结束后，就会得到一个结果集，这个结
+果集中包含了所有包含“Spark”的行。最后，对这个结果集调用count()，这是一个行动操作，会计算出结果集中的元素个数。</p>
+<p>这里再给出另外一个实例，我们要找出文本文件中单行文本所包含的单词数量的最大值，代码如下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/rdd/word.txt"</span><span class="pun">)</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> line </span><span class="pun">:</span><span class="pln"> len</span><span class="pun">(</span><span class="pln">line</span><span class="pun">.</span><span class="pln">split</span><span class="pun">(</span><span class="str">" "</span><span class="pun">))).</span><span class="pln">reduce</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> a</span><span class="pun">,</span><span class="pln">b </span><span class="pun">:</span><span class="pln"> </span><span class="pun">(</span><span class="pln">a </span><span class="pun">&gt;</span><span class="pln"> b </span><span class="kwd">and</span><span class="pln"> a </span><span class="kwd">or</span><span class="pln"> b</span><span class="pun">))</span></li><li class="L2"><span class="lit">5</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>上面代码中，lines是一个RDD，是String类型的RDD，因为这个RDD里面包含了很多行文本。lines.map()，是一个转换操
+作，之前说过，map(func)：将每个元素传递到函数func中，并将结果返回为一个新的数据集，所以，lines.map(lambda line
+ :  len(line.split(” “)))会把每行文本都传递给匿名函数，也就是传递给Lamda表达式line : 
+len(line.split(” “))中的line，然后执行处理逻辑len(line.split(” “))。len(line.split(”
+ 
+“))这个处理逻辑的功能是，对line文本内容进行单词切分，得到很多个单词构成的集合，然后，计算出这个集合中的单词的个数。因此，最终
+lines.map(lambda line : len(line.split(” 
+“)))转换操作得到的RDD，是一个整型RDD，里面每个元素都是整数值（也就是单词的个数）。最后，针对这个RDD[Int]，调用reduce()
+行动操作，完成计算。reduce()操作每次接收两个参数，取出较大者留下，然后再继续比较，例如，RDD[Int]中包含了1,2,3,4,5，那
+么，执行reduce操作时，首先取出1和2，把a赋值为1，把b赋值为2，然后，执行大小判断，保留2。下一次，让保留下来的2赋值给a，再从
+RDD[Int]中取出下一个元素3，把3赋值给b，然后，对a和b执行大小判断，保留较大者3.依此类推。最终，reduce()操作会得到最大值是
+5。</p>
+<p>（备注：关于reduce()操作，你也可以参考Python部分的reduce）</p>
+<p>实际上，如果我们把上面的lines.map(lambda line : len(line.split(” 
+“))).reduce(lambda a,b : (a &gt; b and a or 
+b))分开逐步执行，你就可以更加清晰地发现每个步骤生成的RDD的类型。</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/rdd/word.txt"</span><span class="pun">)</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> line </span><span class="pun">:</span><span class="pln"> line</span><span class="pun">.</span><span class="pln">split</span><span class="pun">(</span><span class="str">" "</span><span class="pun">)）</span></li><li class="L2"><span class="pun">//从上面执行结果可以发现，</span><span class="pln">lines</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="pln">line </span><span class="pun">=&gt;</span><span class="pln"> line</span><span class="pun">.</span><span class="pln">split</span><span class="pun">(</span><span class="str">" "</span><span class="pun">)）返回的结果是分割后字符串列表</span><span class="typ">List</span></li><li class="L3"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="pln">line </span><span class="pun">=&gt;</span><span class="pln"> len</span><span class="pun">(</span><span class="pln">line</span><span class="pun">.</span><span class="pln">split</span><span class="pun">(</span><span class="str">" "</span><span class="pun">)))</span></li><li class="L4"><span class="pun">//</span><span class="pln"> </span><span class="pun">这个</span><span class="pln">RDD</span><span class="pun">中的每个元素都是一个整数值（也就是一行文本包含的单词数）</span></li><li class="L5"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> line </span><span class="pun">:</span><span class="pln"> len</span><span class="pun">(</span><span class="pln">line</span><span class="pun">.</span><span class="pln">split</span><span class="pun">(</span><span class="str">" "</span><span class="pun">))).</span><span class="pln">reduce</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> a</span><span class="pun">,</span><span class="pln">b </span><span class="pun">:</span><span class="pln"> </span><span class="pun">(</span><span class="pln">a </span><span class="pun">&gt;</span><span class="pln"> b </span><span class="kwd">and</span><span class="pln"> a </span><span class="kwd">or</span><span class="pln"> b</span><span class="pun">))</span></li><li class="L6"><span class="lit">5</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<h1>持久化</h1>
+<p>前面我们已经说过，在Spark中，RDD采用惰性求值的机制，每次遇到行动操作，都会从头开始执行计算。如果整个Spark程序中只有一次行动操
+作，这当然不会有什么问题。但是，在一些情形下，我们需要多次调用不同的行动操作，这就意味着，每次调用行动操作，都会触发一次从头开始的计算。这对于迭
+代计算而言，代价是很大的，迭代计算经常需要多次重复使用同一组数据。<br>
+比如，下面就是多次计算同一个DD的例子：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> list </span><span class="pun">=</span><span class="pln"> </span><span class="pun">[</span><span class="str">"Hadoop"</span><span class="pun">,</span><span class="str">"Spark"</span><span class="pun">,</span><span class="str">"Hive"</span><span class="pun">]</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> rdd </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">parallelize</span><span class="pun">(</span><span class="pln">list</span><span class="pun">)</span></li><li class="L2"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> </span><span class="kwd">print</span><span class="pun">(</span><span class="pln">rdd</span><span class="pun">.</span><span class="pln">count</span><span class="pun">())</span><span class="pln"> </span><span class="pun">//行动操作，触发一次真正从头到尾的计算</span></li><li class="L3"><span class="lit">3</span></li><li class="L4"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> </span><span class="kwd">print</span><span class="pun">(</span><span class="str">','</span><span class="pun">.</span><span class="pln">join</span><span class="pun">(</span><span class="pln">rdd</span><span class="pun">.</span><span class="pln">collect</span><span class="pun">()))</span><span class="pln"> </span><span class="pun">//行动操作，触发一次真正从头到尾的计算</span></li><li class="L5"><span class="typ">Hadoop</span><span class="pun">,</span><span class="typ">Spark</span><span class="pun">,</span><span class="typ">Hive</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>上面代码执行过程中，前后共触发了两次从头到尾的计算。<br>
+实际上，可以通过持久化（缓存）机制避免这种重复计算的开销。可以使用persist()方法对一个RDD标记为持久化，之所以说“标记为持久化”，是因
+为出现persist()语句的地方，并不会马上计算生成RDD并把它持久化，而是要等到遇到第一个行动操作触发真正计算以后，才会把计算结果进行持久
+化，持久化后的RDD将会被保留在计算节点的内存中被后面的行动操作重复使用。<br>
+persist()的圆括号中包含的是持久化级别参数，比如，persist(MEMORY_ONLY)表示将RDD作为反序列化的对象存储于JVM中，
+如果内存不足，就要按照LRU原则替换缓存中的内容。persist(MEMORY_AND_DISK)表示将RDD作为反序列化的对象存储在JVM中，
+如果内存不足，超出的分区将会被存放在硬盘上。一般而言，使用cache()方法时，会调用persist(MEMORY_ONLY)。<br>
+例子如下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> list </span><span class="pun">=</span><span class="pln"> </span><span class="pun">[</span><span class="str">"Hadoop"</span><span class="pun">,</span><span class="str">"Spark"</span><span class="pun">,</span><span class="str">"Hive"</span><span class="pun">]</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> rdd </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">parallelize</span><span class="pun">(</span><span class="pln">list</span><span class="pun">)</span></li><li class="L2"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> rdd</span><span class="pun">.</span><span class="pln">cache</span><span class="pun">()</span><span class="pln">  </span><span class="pun">//会调用</span><span class="pln">persist</span><span class="pun">(</span><span class="pln">MEMORY_ONLY</span><span class="pun">)，但是，语句执行到这里，并不会缓存</span><span class="pln">rdd</span><span class="pun">，这是</span><span class="pln">rdd</span><span class="pun">还没有被计算生成</span></li><li class="L3"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> </span><span class="kwd">print</span><span class="pun">(</span><span class="pln">rdd</span><span class="pun">.</span><span class="pln">count</span><span class="pun">())</span><span class="pln"> </span><span class="pun">//第一次行动操作，触发一次真正从头到尾的计算，这时才会执行上面的</span><span class="pln">rdd</span><span class="pun">.</span><span class="pln">cache</span><span class="pun">()，把这个</span><span class="pln">rdd</span><span class="pun">放到缓存中</span></li><li class="L4"><span class="lit">3</span></li><li class="L5"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> </span><span class="kwd">print</span><span class="pun">(</span><span class="str">','</span><span class="pun">.</span><span class="pln">join</span><span class="pun">(</span><span class="pln">rdd</span><span class="pun">.</span><span class="pln">collect</span><span class="pun">()))</span><span class="pln"> </span><span class="pun">//第二次行动操作，不需要触发从头到尾的计算，只需要重复使用上面缓存中的</span><span class="pln">rdd</span></li><li class="L6"><span class="typ">Hadoop</span><span class="pun">,</span><span class="typ">Spark</span><span class="pun">,</span><span class="typ">Hive</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>最后，可以使用unpersist()方法手动地把持久化的RDD从缓存中移除。</p>
+<h1>分区</h1>
+<p>RDD是弹性分布式数据集，通常RDD很大，会被分成很多个分区，分别保存在不同的节点上。RDD分区的一个分区原则是使得分区的个数尽量等于集群中的CPU核心（core）数目。<br>
+对于不同的Spark部署模式而言（本地模式、Standalone模式、YARN模式、Mesos模式），都可以通过设置spark.default.parallelism这个参数的值，来配置默认的分区数目，一般而言：<br>
+*本地模式：默认为本地机器的CPU数目，若设置了local[N],则默认为N；<br>
+*Apache Mesos：默认的分区数为8；<br>
+*Standalone或YARN：在“集群中所有CPU核心数目总和”和“2”二者中取较大值作为默认值；</p>
+<p>因此，对于parallelize而言，如果没有在方法中指定分区数，则默认为spark.default.parallelism，比如：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> array </span><span class="pun">=</span><span class="pln"> </span><span class="pun">[</span><span class="lit">1</span><span class="pun">,</span><span class="lit">2</span><span class="pun">,</span><span class="lit">3</span><span class="pun">,</span><span class="lit">4</span><span class="pun">,</span><span class="lit">5</span><span class="pun">]</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> rdd </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">parallelize</span><span class="pun">(</span><span class="pln">array</span><span class="pun">,</span><span class="lit">2</span><span class="pun">)</span><span class="pln"> </span><span class="com">#设置两个分区</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>对于textFile而言，如果没有在方法中指定分区数，则默认为min(defaultParallelism,2)，其中，defaultParallelism对应的就是spark.default.parallelism。<br>
+如果是从HDFS中读取文件，则分区数为文件分片数(比如，128MB/片)。</p>
+<h1>打印元素</h1>
+<p>在实际编程中，我们经常需要把RDD中的元素打印输出到屏幕上（标准输出stdout），一般会采用语句rdd.foreach(print)或者
+rdd.map(print)。当采用本地模式（local）在单机上执行时，这些语句会打印出一个RDD中的所有元素。但是，当采用集群模式执行时，在
+worker节点上执行打印语句是输出到worker节点的stdout中，而不是输出到任务控制节点Driver 
+Program中，因此，任务控制节点Driver 
+Program中的stdout是不会显示打印语句的这些输出内容的。为了能够把所有worker节点上的打印输出信息也显示到Driver 
+Program中，可以使用collect()方法，比如，rdd.collect().foreach(print)，但是，由于collect()方
+法会把各个worker节点上的所有RDD元素都抓取到Driver 
+Program中，因此，这可能会导致内存溢出。因此，当你只需要打印RDD的部分元素时，可以采用语句
+rdd.take(100).foreach(print)。</p>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1700-2/" title="Spark2.1.0+入门：RDD编程(Python版)">http://dblab.xmu.edu.cn/blog/1700-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="3.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%BC%96%E7%A8%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！" style="display: block;"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

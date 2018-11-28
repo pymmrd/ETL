@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark2.1.0+入门：Spark的安装和使用(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Spark入门：RDD的设计与运行原理(Python版)" href="http://dblab.xmu.edu.cn/blog/1681-2/">
+<link rel="next" title="Spark2.1.0+入门：第一个Spark应用程序：WordCount(Python版)" href="http://dblab.xmu.edu.cn/blog/1692-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1689-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1689-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1689 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1689" class="post-1689 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark2.1.0+入门：Spark的安装和使用(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-03T20:15:29+00:00">2017年12月3日</time> <span class="updated">(updated: <time class="updated" datetime="2018-10-28T19:00:42+00:00">2018年10月28日</time>)</span></span><span class="views" id="views"><i class="fa fa-eye"></i> 13237</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a><br>
+Spark可以独立安装使用，也可以和Hadoop一起安装使用。本教程中，我们采用和Hadoop一起安装使用，这样，就可以让Spark使用HDFS
+存取数据。需要说明的是，当安装好Spark以后，里面就自带了scala环境，不需要额外安装scala，因此，“Spark安装”这个部分的教程，假
+设读者的计算机上，没有安装Scala，也没有安装Java（当然了，如果已经安装Java和Scala，也没有关系，依然可以继续按照本教程进行安
+装），也就是说，你的计算机目前只有Linux系统，其他的软件和环境都没有安装（没有Java，没有Scala，没有Hadoop，没有Spark），
+需要从零开始安装所有大数据相关软件。下面，需要你在自己的Linux系统上（笔者采用的Linux系统是Ubuntu16.04），首先安装Java和
+Hadoop，然后再安装Spark（Spark安装好以后，里面就默认包含了Scala解释器）。由于Ubuntu  
+16.04已经自带了Python 3.5版本，所以你的系统如果是Ubuntu 
+16.04，那么就不需要重新安装Python了。本教程也将以python3语法进行教学。<br>
+本教程的具体运行环境如下：</p>
+<ul>
+<li>Ubuntu16.04以上</li>
+<li>Hadoop 2.7.1以上</li>
+<li>Java JDK 1.8以上</li>
+<li>Spark 2.1.0 以上</li>
+<li>Python 3.4以上</li>
+</ul>
+<p><span id="more-1689"></span></p>
+<h1>一、安装Hadoop</h1>
+<p>如果你的计算机上已经安装了Hadoop，本步骤可以略过。这里假设没有安装。如果没有安装Hadoop，请访问<a href="http://dblab.xmu.edu.cn/blog/install-hadoop/" target="_blank">Hadoop安装教程_单机/伪分布式配置_Hadoop2.6.0/Ubuntu14.04</a>,依照教程学习安装即可。注意，在这个Hadoop安装教程中，就包含了Java的安装，所以，按照这个教程，就可以完成JDK和Hadoop这二者的安装。</p>
+<h1>二、安装Spark</h1>
+<p>在Linux系统中打开浏览器，访问<a href="http://spark.apache.org/downloads.html" target="_blank">Spark官方下载地址</a>，按照如下图下载。<br>
+<img src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/Spark2.png" alt=""><br>
+由于我们已经自己安装了Hadoop，所以，在“Choose a package type”后面需要选择“Pre-build with 
+user-provided Hadoop [can use with most Hadoop 
+distributions]”，然后，点击“Download 
+Spark”后面的“spark-2.1.0-bin-without-hadoop.tgz”下载即可。下载的文件，默认会被浏览器保存在“/home
+/hadoop/下载”目录下。需要说明的是，Pre-build with user-provided Hadoop: 属于“Hadoop 
+free”版，这样，下载到的Spark，可应用到任意Hadoop 版本。</p>
+<p>Spark部署模式主要有四种：Local模式（单机模式）、Standalone模式（使用Spark自带的简单集群管理器）、YARN模式（使用YARN作为集群管理器）和Mesos模式（使用Mesos作为集群管理器）。<br>
+这里介绍Local模式（单机模式）的 Spark安装。我们选择Spark 2.1.0版本，并且假设当前使用用户名hadoop登录了Linux操作系统。</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">sudo tar </span><span class="pln">-zxf ~/下载/spark-2.1.0-bin-without-hadoop.tgz -C /usr/local/</span></li><li class="L1"><span class="kwd">cd </span><span class="pln">/usr/local</span></li><li class="L2"><span class="kwd">sudo mv </span><span class="pln">./spark-2.1.0-bin-without-hadoop/ ./spark</span></li><li class="L3"><span class="kwd">sudo chown </span><span class="pln">-R hadoop:hadoop ./spark          </span><span class="com"># 此处的 hadoop 为你的用户名</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>安装后，还需要修改Spark的配置文件spark-env.sh</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark</span></li><li class="L1"><span class="kwd">cp </span><span class="pln">./conf/spark-env.sh.template ./conf/spark-env.sh</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>编辑spark-env.sh文件(vim ./conf/spark-env.sh)，在第一行添加以下配置信息:</p>
+<pre><code>export SPARK_DIST_CLASSPATH=$(/usr/local/hadoop/bin/hadoop classpath)
+</code></pre>
+<p>有了上面的配置信息以后，Spark就可以把数据存储到Hadoop分布式文件系统HDFS中，也可以从HDFS中读取数据。如果没有配置上面信息，Spark就只能读写本地数据，无法读写HDFS数据。</p>
+<p>然后通过如下命令，修改环境变量</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">vim </span><span class="pln">~/.bashrc</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>在.bashrc文件中添加如下内容</p>
+<pre><code>export JAVA_HOME=/usr/lib/jvm/default-java
+export HADOOP_HOME=/usr/local/hadoop
+export SPARK_HOME=/usr/local/spark
+export PYTHONPATH=$SPARK_HOME/python:$SPARK_HOME/python/lib/py4j-0.10.4-src.zip:$PYTHONPATH
+export PYSPARK_PYTHON=python3
+export PATH=$HADOOP_HOME/bin:$SPARK_HOME/bin:$PATH
+</code></pre>
+<p>PYTHONPATH环境变量主要是为了在Python3中引入pyspark库，PYSPARK_PYTHON变量主要是设置pyspark运行的python版本。<br>
+.bashrc中必须包含JAVA_HOME,HADOOP_HOME,SPARK_HOME,PYTHONPATH,PYSPARK_PYTHON,PATH这些环境变量。如果已经设置了这些变量则不需要重新添加设置。<br>
+接着还需要让该环境变量生效，执行如下代码：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">source </span><span class="pln">~/.bashrc</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>配置完成后就可以直接使用，不需要像Hadoop运行启动命令。<br>
+通过运行Spark自带的示例，验证Spark是否安装成功。</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark</span></li><li class="L1"><span class="pln">bin/run-example SparkPi</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>执行时会输出非常多的运行信息，输出结果不容易找到，可以通过 grep 命令进行过滤（命令中的 2&gt;&amp;1 可以将所有的信息都输出到 stdout 中，否则由于输出日志的性质，还是会输出到屏幕中）:</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">bin/run-example SparkPi 2&gt;&amp;1 | grep </span><span class="str">"Pi is"</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>这里涉及到Linux Shell中管道的知识，详情可以参考<a href="http://dblab.xmu.edu.cn/blog/824-2/" target="_blank">Linux Shell中的管道命令</a><br>
+过滤后的运行结果如下图示，可以得到π 的 5 位小数近似值：<br>
+<img src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/spark-quick-start-guide-02-sparkpi.png" alt=""></p>
+<h1>三、在pyspark中运行代码</h1>
+<p>学习Spark程序开发，建议首先通过pyspark交互式学习，加深Spark程序开发的理解。<br>
+这里介绍pyspark 的基本使用。pyspark提供了简单的方式来学习 
+API，并且提供了交互的方式来分析数据。你可以输入一条语句，pyspark会立即执行语句并返回结果，这就是我们所说的REPL（Read-
+Eval-Print 
+Loop，交互式解释器），为我们提供了交互式执行环境，表达式计算完成就会输出结果，而不必等到整个程序运行完毕，因此可即时查看中间结果，并对程序进
+行修改，这样可以在很大程度上提升开发效率。</p>
+<p>前面已经安装了Hadoop和Spark，如果Spark不使用HDFS和YARN，那么就不用启动Hadoop也可以正常使用Spark。如果在
+使用Spark的过程中需要用到 HDFS，就要首先启动 Hadoop（启动Hadoop的方法可以参考上面给出的Hadoop安装教程）。<br>
+这里假设不需要用到HDFS，因此，就没有启动Hadoop。现在我们直接开始使用Spark。</p>
+<div class="callout callout-note">
+<p>注意：如果按照上面的安装步骤，已经设置了PYSPARK_PYTHON环境变量，那么你直接使用如下命令启动pyspark即可。</p>
+</div>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">bin/pyspark</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>如果没有设置PYSPARK_PYTHON环境变量，则使用如下命令启动pyspark</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">PYSPARK_PYTHON=python3</span></li><li class="L1"><span class="pln">./bin/pyspark</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>pyspark命令及其常用的参数如下：</p>
+<pre><code>./bin/pyspark --master &lt;master-url&gt;
+</code></pre>
+<p>Spark的运行模式取决于传递给SparkContext的Master URL的值。Master URL可以是以下任一种形式：<br>
+* local 使用一个Worker线程本地化运行SPARK(完全不并行)<br>
+* local[*] 使用逻辑CPU个数数量的线程来本地化运行Spark<br>
+* local[K] 使用K个Worker线程本地化运行Spark（理想情况下，K应该根据运行机器的CPU核数设定）<br>
+* spark://HOST:PORT 连接到指定的Spark standalone master。默认端口是7077.<br>
+* yarn-client 以客户端模式连接YARN集群。集群的位置可以在HADOOP_CONF_DIR 环境变量中找到。<br>
+* yarn-cluster 以集群模式连接YARN集群。集群的位置可以在HADOOP_CONF_DIR 环境变量中找到。<br>
+* mesos://HOST:PORT 连接到指定的Mesos集群。默认接口是5050。</p>
+<p>需要强调的是，这里我们采用“本地模式”（local）运行Spark，关于如何在集群模式下运行Spark，可以参考后面的“<a href="http://dblab.xmu.edu.cn/blog/1217-2/" target="_blank">在集群上运行Spark应用程序</a>”。<br>
+在Spark中采用本地模式启动pyspark的命令主要包含以下参数：<br>
+–master：这个参数表示当前的pyspark要连接到哪个master，如果是local[*]，就是使用本地模式启动pyspark，其中，中括号内的星号表示需要使用几个CPU核心(core)；<br>
+–jars： 这个参数用于把相关的JAR包添加到CLASSPATH中；如果有多个jar包，可以使用逗号分隔符连接它们；</p>
+<p>比如，要采用本地模式，在4个CPU核心上运行pyspark：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark</span></li><li class="L1"><span class="pln">./bin/pyspark --master local[4]</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>或者，可以在CLASSPATH中添加code.jar，命令如下：</p>
+<pre><code>cd /usr/local/spark
+./bin/pyspark --master local[4] --jars code.jar 
+</code></pre>
+<p>可以执行“pyspark –help”命令，获取完整的选项列表，具体如下：</p>
+<pre><code>cd /usr/local/spark
+./bin/pyspark --help
+</code></pre>
+<p>上面是命令使用方法介绍，下面正式使用命令进入pyspark环境，可以通过下面命令启动pyspark环境：</p>
+<pre><code>bin/pyspark
+</code></pre>
+<p>该命令省略了参数，这时，系统默认是“bin/pyspark–master local[*]”，也就是说，是采用本地模式运行，并且使用本地所有的CPU核心。</p>
+<p>启动pyspark后，就会进入“&gt;&gt;&gt;”命令提示符状态,如下图所示：<br>
+<img src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/_001.png" alt="" title=""><br>
+现在，你就可以在里面输入python代码进行调试了。<br>
+比如，下面在命令提示符后面输入一个表达式“8 * 2 + 5”，然后回车，就会立即得到结果：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> </span><span class="lit">8</span><span class="pln"> </span><span class="pun">*</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> </span><span class="lit">5</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>最后，可以使用命令“exit()”退出pyspark，如下所示：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> exit</span><span class="pun">()</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>或者，也可以直接使用“Ctrl+D”组合键，退出pyspark。</p>
+<h1>四、Spark独立应用程序编程</h1>
+<p>接着我们通过一个简单的应用程序来演示如何通过 Spark API 编写一个独立应用程序。使用 Python进行spark编程比Java和Scala简单得多。<br>
+在进行Python编程前，请先确定是否已经.bashrc中添加PYTHONPATH环境变量。<br>
+接下来即可进行Python编程.<br>
+这里在新建一个test.py文件,并在test.py添加代码</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">~</span></li><li class="L1"><span class="kwd">vim </span><span class="pln">test.py</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>在test.py中添加如下代码,：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">from</span><span class="pln"> pyspark </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">SparkContext</span></li><li class="L1"><span class="pln">sc </span><span class="pun">=</span><span class="pln"> </span><span class="typ">SparkContext</span><span class="pun">(</span><span class="pln"> </span><span class="str">'local'</span><span class="pun">,</span><span class="pln"> </span><span class="str">'test'</span><span class="pun">)</span></li><li class="L2"><span class="pln">logFile </span><span class="pun">=</span><span class="pln"> </span><span class="str">"file:///usr/local/spark/README.md"</span></li><li class="L3"><span class="pln">logData </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="pln">logFile</span><span class="pun">,</span><span class="pln"> </span><span class="lit">2</span><span class="pun">).</span><span class="pln">cache</span><span class="pun">()</span></li><li class="L4"><span class="pln">numAs </span><span class="pun">=</span><span class="pln"> logData</span><span class="pun">.</span><span class="pln">filter</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> line</span><span class="pun">:</span><span class="pln"> </span><span class="str">'a'</span><span class="pln"> </span><span class="kwd">in</span><span class="pln"> line</span><span class="pun">).</span><span class="pln">count</span><span class="pun">()</span></li><li class="L5"><span class="pln">numBs </span><span class="pun">=</span><span class="pln"> logData</span><span class="pun">.</span><span class="pln">filter</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> line</span><span class="pun">:</span><span class="pln"> </span><span class="str">'b'</span><span class="pln"> </span><span class="kwd">in</span><span class="pln"> line</span><span class="pun">).</span><span class="pln">count</span><span class="pun">()</span></li><li class="L6"><span class="kwd">print</span><span class="pun">(</span><span class="str">'Lines with a: %s, Lines with b: %s'</span><span class="pln"> </span><span class="pun">%</span><span class="pln"> </span><span class="pun">(</span><span class="pln">numAs</span><span class="pun">,</span><span class="pln"> numBs</span><span class="pun">))</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>保存代码后，通过如下命令执行：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">python3 ~/test.py</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>执行结果如下图：<br>
+<img src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/_002.png" alt="" title=""><br>
+最终得到的结果如下：</p>
+<pre><code>Lines with a: 62, Lines with b: 30
+</code></pre>
+<p>自此，你就完成了你的第一个 Spark 应用程序了。</p>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1689-2/" title="Spark2.1.0+入门：Spark的安装和使用(Python版)">http://dblab.xmu.edu.cn/blog/1689-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="2.1Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！" style="display: none;"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

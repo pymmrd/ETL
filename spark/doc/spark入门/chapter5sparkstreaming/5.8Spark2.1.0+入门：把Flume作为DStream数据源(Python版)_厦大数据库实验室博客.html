@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark2.1.0+入门：把Flume作为DStream数据源(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Python：高阶函数-map/reduce/filter" href="http://dblab.xmu.edu.cn/blog/1744-2/">
+<link rel="next" title="Python：迭代器和生成器" href="http://dblab.xmu.edu.cn/blog/1746-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1745-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1745-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1745 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1745" class="post-1745 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark2.1.0+入门：把Flume作为DStream数据源(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-12T11:06:58+00:00">2017年12月12日</time> <span class="updated">(updated: <time class="updated" datetime="2018-04-25T15:56:25+00:00">2018年4月25日</time>)</span></span><span class="views" id="views"><i class="fa fa-eye"></i> 1081</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p>Flume是非常流行的日志采集系统，可以作为DStream的高级数据源。本部分将介绍如何让Flume推送消息给Spark Streaming，Spark Streaming收到消息后进行处理。<br>
+<span id="more-1745"></span></p>
+<h1>任务描述</h1>
+<p>把Flume Source设置为netcat类型，从终端上不断给Flume 
+Source发送各种消息，Flume把消息汇集到Sink，这里把Sink类型设置为avro，由Sink把消息推送给Spark 
+Streaming，由我们编写的Spark Streaming应用程序对消息进行处理。</p>
+<h1>Flume的安装和准备工作</h1>
+<h2>下载安装Flume</h2>
+<p>请登录Linux系统（本教程全部统一采用hadoop用户登录），下载安装Flume。关于Flume的概念和安装方法，请参考厦门大学数据库实验室博客文章《<a href="http://dblab.xmu.edu.cn/blog/1102/" target="_blank">日志采集工具Flume的安装与使用方法</a>》，必须要理解什么是Flume Source、Flume Sink和Flume Agent等。这里我们从官网下载的安装文件是apache-flume-1.7.0-bin.tar.gz（<a href="http://www.apache.org/dyn/closer.lua/flume/1.7.0/apache-flume-1.7.0-bin.tar.gz" target="_blank">官网下载地址</a>）。这里假设读者已经按照博客文章成功安装了Flume，并且安装在“/usr/local/flume”目录下。</p>
+<h2>配置Flume数据源</h2>
+<p>请登录Linux系统，打开一个终端，执行如下命令新建一个Flume配置文件flume-to-spark.conf：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/flume</span></li><li class="L1"><span class="kwd">cd </span><span class="pln">conf</span></li><li class="L2"><span class="kwd">vim </span><span class="pln">flume-to-spark.conf</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>在flume-to-spark.conf文件中写入如下内容：</p>
+<pre><code>#flume-to-spark.conf: A single-node Flume configuration
+        # Name the components on this agent
+        a1.sources = r1
+        a1.sinks = k1
+        a1.channels = c1
+
+        # Describe/configure the source
+        a1.sources.r1.type = netcat
+        a1.sources.r1.bind = localhost
+        a1.sources.r1.port = 33333
+
+        # Describe the sink
+        a1.sinks.k1.type = avro
+        a1.sinks.k1.hostname = localhost
+        a1.sinks.k1.port =44444
+
+        # Use a channel which buffers events in memory
+        a1.channels.c1.type = memory
+        a1.channels.c1.capacity = 1000000
+        a1.channels.c1.transactionCapacity = 1000000
+
+        # Bind the source and sink to the channel
+        a1.sources.r1.channels = c1
+        a1.sinks.k1.channel = c1
+
+
+</code></pre>
+<p>在上面的配置文件中，我们把Flume Source类别设置为netcat，绑定到localhost的33333端口，这样，我们后面就可以通过“telnet localhost 33333”命令向Flume Source发送消息。<br>
+同时，我们把Flume Sink类别设置为avro，绑定到localhost的44444端口，这样，Flume 
+Source把采集到的消息汇集到Flume Sink以后，Sink会把消息推送给localhost的44444端口，而我们编写的Spark 
+Streaming程序一直在监听localhost的44444端口，一旦有消息到达，就会被Spark Streaming应用程序取走进行处理。</p>
+<p>特别要强调的是，上述配置文件完成以后，暂时“不要”启动Flume Agent，如果这个时候使用“flume-ng 
+agent”命令启动agent，就会出现错误提示“localhost:44444拒绝连接”，也就是Flume 
+Sink要发送消息给localhost的44444端口，但是，无法连接上localhost的44444端口。为什么会出现这个错误呢？因为，这个时
+候我们还没有启动Spark 
+Streaming应用程序，也就没有启动localhost的44444端口，所以，Sink是无法向这个端口发送消息的。</p>
+<h1>Spark的准备工作</h1>
+<p>Kafka和Flume等高级输入源，需要依赖独立的库（jar文件）。按照我们前面安装好的Spark版本，这些jar包都不在里面。<br>
+现在我们就需要下载spark-streaming-flume_2.11-2.1.0.jar，其中2.11表示对应的Scala版本号，2.1.0表示Spark版本号。现在请在Linux系统中，打开一个火狐浏览器，请点击<a href="http://mvnrepository.com/artifact/org.apache.spark/spark-streaming-flume_2.11/2.1.0" target="_blank">这里访问官网</a>，里面有提供spark-streaming-flume_2.11-2.1.0.jar文件的下载。</p>
+<p>下载后的文件会被默认保存在当前Linux登录用户的下载目录下，本教程统一使用hadoop用户名登录Linux系统，所以，文件下载后会被保存
+到“/home/hadoop/下载”目录下面。现在，我们在“/usr/local/spark/jars”目录下新建一个“flume”目录，就把这
+个文件复制到Spark目录的“/usr/local/spark/jars/flume”目录下。请新打开一个终端，输入下面命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark/jars</span></li><li class="L1"><span class="kwd">mkdir </span><span class="pln">flume</span></li><li class="L2"><span class="kwd">cd </span><span class="pln">~</span></li><li class="L3"><span class="kwd">cd </span><span class="pln">下载</span></li><li class="L4"><span class="kwd">cp </span><span class="pln">./spark-streaming-flume_2.11-2.1.0.jar /usr/local/spark/jars/flume</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>这样，我们就成功地把spark-streaming-flume_2.11-2.1.0.jar文件拷贝到了“/usr/local/spark/jars/flume”目录下。</p>
+<p>下面我们还要修改spark目录下conf/spark-env.sh文件中的SPARK_DIST_CLASSPATH变量.把flume的相关jar包添加到此文件中</p>
+<pre><code>export SPARK_DIST_CLASSPATH=$(/usr/local/hadoop/bin/hadoop classpath):$(/usr/local/hbase/bin/hbase classpath):/usr/local/spark/examples/jars/*:/usr/local/spark/jars/kafka/*:/usr/local/kafka/libs/*:/usr/local/spark/jars/flume/*:/usr/local/flume/lib/*
+</code></pre>
+<p>这样，我们就已经准备好了Spark环境，它可以支持Flume相关编程了。</p>
+<h1>编写Spark程序使用Flume数据源</h1>
+<p>下面，我们就可以进行程序编写了。请新打开一个终端，然后，执行命令创建代码目录：</p>
+<pre><code>cd /usr/local/spark/mycode
+mkdir flume
+cd flume
+vim FlumeEventCount.py
+</code></pre>
+<p>请在FlumeEventCount.py代码文件中输入以下代码：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">from</span><span class="pln"> __future__ </span><span class="kwd">import</span><span class="pln"> print_function</span></li><li class="L1"><span class="pln">&nbsp;</span></li><li class="L2"><span class="kwd">import</span><span class="pln"> sys</span></li><li class="L3"><span class="pln">&nbsp;</span></li><li class="L4"><span class="kwd">from</span><span class="pln"> pyspark </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">SparkContext</span></li><li class="L5"><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">streaming </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">StreamingContext</span></li><li class="L6"><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">streaming</span><span class="pun">.</span><span class="pln">flume </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">FlumeUtils</span></li><li class="L7"><span class="kwd">import</span><span class="pln"> pyspark</span></li><li class="L8"><span class="kwd">if</span><span class="pln"> __name__ </span><span class="pun">==</span><span class="pln"> </span><span class="str">"__main__"</span><span class="pun">:</span></li><li class="L9"><span class="pln">    </span><span class="kwd">if</span><span class="pln"> len</span><span class="pun">(</span><span class="pln">sys</span><span class="pun">.</span><span class="pln">argv</span><span class="pun">)</span><span class="pln"> </span><span class="pun">!=</span><span class="pln"> </span><span class="lit">3</span><span class="pun">:</span></li><li class="L0"><span class="pln">        </span><span class="kwd">print</span><span class="pun">(</span><span class="str">"Usage: flume_wordcount.py &lt;hostname&gt; &lt;port&gt;"</span><span class="pun">,</span><span class="pln"> file</span><span class="pun">=</span><span class="pln">sys</span><span class="pun">.</span><span class="pln">stderr</span><span class="pun">)</span></li><li class="L1"><span class="pln">        exit</span><span class="pun">(-</span><span class="lit">1</span><span class="pun">)</span></li><li class="L2"><span class="pln">&nbsp;</span></li><li class="L3"><span class="pln">    sc </span><span class="pun">=</span><span class="pln"> </span><span class="typ">SparkContext</span><span class="pun">(</span><span class="pln">appName</span><span class="pun">=</span><span class="str">"FlumeEventCount"</span><span class="pun">)</span></li><li class="L4"><span class="pln">    ssc </span><span class="pun">=</span><span class="pln"> </span><span class="typ">StreamingContext</span><span class="pun">(</span><span class="pln">sc</span><span class="pun">,</span><span class="pln"> </span><span class="lit">2</span><span class="pun">)</span></li><li class="L5"><span class="pln">&nbsp;</span></li><li class="L6"><span class="pln">    hostname</span><span class="pun">=</span><span class="pln"> sys</span><span class="pun">.</span><span class="pln">argv</span><span class="pun">[</span><span class="lit">1</span><span class="pun">]</span></li><li class="L7"><span class="pln">    port </span><span class="pun">=</span><span class="pln"> int</span><span class="pun">(</span><span class="pln">sys</span><span class="pun">.</span><span class="pln">argv</span><span class="pun">[</span><span class="lit">2</span><span class="pun">])</span></li><li class="L8"><span class="pln">    stream </span><span class="pun">=</span><span class="pln"> </span><span class="typ">FlumeUtils</span><span class="pun">.</span><span class="pln">createStream</span><span class="pun">(</span><span class="pln">ssc</span><span class="pun">,</span><span class="pln"> hostname</span><span class="pun">,</span><span class="pln"> port</span><span class="pun">,</span><span class="pln">pyspark</span><span class="pun">.</span><span class="typ">StorageLevel</span><span class="pun">.</span><span class="pln">MEMORY_AND_DISK_SER_2</span><span class="pun">)</span></li><li class="L9"><span class="pln">    stream</span><span class="pun">.</span><span class="pln">count</span><span class="pun">().</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> cnt </span><span class="pun">:</span><span class="pln"> </span><span class="str">"Recieve "</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> str</span><span class="pun">(</span><span class="pln">cnt</span><span class="pun">)</span><span class="pln"> </span><span class="pun">+</span><span class="str">" Flume events!!!!"</span><span class="pun">).</span><span class="pln">pprint</span><span class="pun">()</span></li><li class="L0"><span class="pln">&nbsp;</span></li><li class="L1"><span class="pln">    ssc</span><span class="pun">.</span><span class="pln">start</span><span class="pun">()</span></li><li class="L2"><span class="pln">    ssc</span><span class="pun">.</span><span class="pln">awaitTermination</span><span class="pun">()</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<h1>测试程序效果</h1>
+<p>关闭之前打开的所有终端。首先，请新建第1个Linux终端，启动Spark Streaming应用程序，命令如下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/spark-submit --driver-class-path /usr/local/spark/jars/*:/usr/local/spark/jars/flume/* ./mycode/flume/FlumeEventCount.py localhost 44444</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>通过上面命令，我们为应用程序提供host和port两个参数的值分别为localhost和44444，程序会对localhost的44444
+端口进行监听，Milliseconds(2000)设置了时间间隔为2秒，所以，该程序每隔2秒就会从指定的端口中获取由Flume 
+Sink发给该端口的消息，然后进行处理，对消息进行统计，打印出“Received 0 flume events.”这样的信息。</p>
+<p>执行该命令后，屏幕上会显示程序运行的相关信息，并会每隔2秒钟刷新一次信息，大量信息中会包含如下重要信息：</p>
+<pre><code>-------------------------------------------
+Time: 1488029430000 ms
+-------------------------------------------
+Received 0 flume events.
+</code></pre>
+<p>因为目前Flume还没有启动，没有给FlumeEventCount发送任何消息，所以Flume Events的数量是0。<br>
+第1个终端不要关闭，让它一直处于监听状态。</p>
+<p>现在，我们可以再另外新建第2个终端，在这个新的终端中启动Flume Agent，命令如下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/flume</span></li><li class="L1"><span class="pln">bin/flume-ng agent --conf ./conf --conf-file ./conf/flume-to-spark.conf --name a1 -Dflume.root.logger=INFO,console</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>启动agent以后，该agent就会一直监听localhost的33333端口，这样，我们下面就可以通过“telnet localhost 33333”命令向Flume Source发送消息。第2个终端也不要关闭，让它一直处于监听状态。</p>
+<p>请另外新建第3个终端，执行如下命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">telnet localhost 33333</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>执行该命令以后，就可以在这个窗口里面随便敲入若干个字符和若干个回车，这些消息都会被Flume监听到，Flume把消息采集到以后汇集到
+Sink，然后由Sink发送给Spark的FlumeEventCount程序进行处理。然后，你就可以在运行FlumeEventCount的前面那
+个终端窗口内看到类似如下的统计结果：</p>
+<pre><code>-------------------------------------------
+Time: 1488029430000 ms
+-------------------------------------------
+Received 0 flume events.
+#这里省略了其他屏幕信息
+-------------------------------------------
+Time: 1488029432000 ms
+-------------------------------------------
+Received 8 flume events.
+#这里省略了其他屏幕信息
+-------------------------------------------
+Time: 1488029434000 ms
+-------------------------------------------
+Received 21 flume events.
+</code></pre>
+<p>从屏幕信息中可以看出，我们在telnet那个终端内发送的消息，都被成功发送到Spark进行处理了。</p>
+<p>至此，本实验顺利完成。实验结束后，要关闭各个终端，只要切换到该终端窗口，然后按键盘的Ctrl+C组合键，就可以结束程序运行。</p>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1745-2/" title="Spark2.1.0+入门：把Flume作为DStream数据源(Python版)">http://dblab.xmu.edu.cn/blog/1745-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="5.8Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%8A%8AFlume%E4%BD%9C%E4%B8%BADStream%E6%95%B0%E6%8D%AE%E6%BA%90(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！" style="display: block;"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

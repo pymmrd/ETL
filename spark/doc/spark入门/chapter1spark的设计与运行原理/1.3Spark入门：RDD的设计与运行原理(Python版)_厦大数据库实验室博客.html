@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark入门：RDD的设计与运行原理(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="macOS 安装和配置Spark 学习指南" href="http://dblab.xmu.edu.cn/blog/1661-2/">
+<link rel="next" title="Spark2.1.0+入门：Spark的安装和使用(Python版)" href="http://dblab.xmu.edu.cn/blog/1689-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1681-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1681-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1681 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1681" class="post-1681 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark入门：RDD的设计与运行原理(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-01T13:23:44+00:00">2017年12月1日</time> <span class="updated">(updated: <time class="updated" datetime="2017-12-06T14:58:58+00:00">2017年12月6日</time>)</span></span><span class="views" id="views"><i class="fa fa-eye"></i> 4284</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载。版权所有，侵权必究！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p>Spark的核心是建立在统一的抽象RDD之上，使得Spark的各个组件可以无缝进行集成，在同一个应用程序中完成大数据计算任务。RDD的设计
+理念源自AMP实验室发表的论文《Resilient Distributed Datasets: A Fault-Tolerant 
+Abstraction for In-Memory Cluster Computing》。<br>
+<span id="more-1681"></span></p>
+<h1>1.RDD设计背景</h1>
+<p>在实际应用中，存在许多迭代式算法（比如机器学习、图算法等）和交互式数据挖掘工具，这些应用场景的共同之处是，不同计算阶段之间会重用中间结果，
+即一个阶段的输出结果会作为下一个阶段的输入。但是，目前的MapReduce框架都是把中间结果写入到HDFS中，带来了大量的数据复制、磁盘IO和序
+列化开销。虽然，类似Pregel等图计算框架也是将结果保存在内存当中，但是，这些框架只能支持一些特定的计算模式，并没有提供一种通用的数据抽象。
+RDD就是为了满足这种需求而出现的，它提供了一个抽象的数据架构，我们不必担心底层数据的分布式特性，只需将具体的应用逻辑表达为一系列转换处理，不同
+RDD之间的转换操作形成依赖关系，可以实现管道化，从而避免了中间结果的存储，大大降低了数据复制、磁盘IO和序列化开销。</p>
+<h1>2.RDD概念</h1>
+<p>一个RDD就是一个分布式对象集合，本质上是一个只读的分区记录集合，每个RDD可以分成多个分区，每个分区就是一个数据集片段，并且一个RDD的
+不同分区可以被保存到集群中不同的节点上，从而可以在集群中的不同节点上进行并行计算。RDD提供了一种高度受限的共享内存模型，即RDD是只读的记录分
+区的集合，不能直接修改，只能基于稳定的物理存储中的数据集来创建RDD，或者通过在其他RDD上执行确定的转换操作（如map、join和
+groupBy）而创建得到新的RDD。RDD提供了一组丰富的操作以支持常见的数据运算，分为“行动”（Action）和“转换”
+（Transformation）两种类型，前者用于执行计算并指定输出的形式，后者指定RDD之间的相互依赖关系。两类操作的主要区别是，转换操作（比
+如map、filter、groupBy、join等）接受RDD并返回RDD，而行动操作（比如count、collect等）接受RDD但是返回非
+RDD（即输出一个值或结果）。RDD提供的转换接口都非常简单，都是类似map、filter、groupBy、join等粗粒度的数据转换操作，而不
+是针对某个数据项的细粒度修改。因此，RDD比较适合对于数据集中元素执行相同操作的批处理式应用，而不适合用于需要异步、细粒度状态的应用，比如Web
+应用系统、增量式的网页爬虫等。正因为这样，这种粗粒度转换接口设计，会使人直觉上认为RDD的功能很受限、不够强大。但是，实际上RDD已经被实践证明
+可以很好地应用于许多并行计算应用中，可以具备很多现有计算框架（比如MapReduce、SQL、Pregel等）的表达能力，并且可以应用于这些框架
+处理不了的交互式数据挖掘应用。<br>
+Spark用Scala语言实现了RDD的API，程序员可以通过调用API实现对RDD的各种操作。RDD典型的执行过程如下：</p>
+<ol>
+<li>RDD读入外部数据源（或者内存中的集合）进行创建；</li>
+<li>RDD经过一系列的“转换”操作，每一次都会产生不同的RDD，供给下一个“转换”使用；</li>
+<li>最后一个RDD经“行动”操作进行处理，并输出到外部数据源（或者变成Scala集合或标量）。</li>
+</ol>
+<p>需要说明的是，RDD采用了惰性调用，即在RDD的执行过程中（如图9-8所示），真正的计算发生在RDD的“行动”操作，对于“行动”之前的所有
+“转换”操作，Spark只是记录下“转换”操作应用的一些基础数据集以及RDD生成的轨迹，即相互之间的依赖关系，而不会触发真正的计算。<br>
+<img src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-8-Spark.jpg" alt="图9-8 Spark的转换和行动操作"><br>
+图9-8 Spark的转换和行动操作<br>
+例如，在图9-9中，从输入中逻辑上生成A和C两个RDD，经过一系列“转换”操作，逻辑上生成了F（也是一个RDD），之所以说是逻辑上，是因为这时候
+计算并没有发生，Spark只是记录了RDD之间的生成和依赖关系。当F要进行输出时，也就是当F进行“行动”操作的时候，Spark才会根据RDD的依
+赖关系生成DAG，并从起点开始真正的计算。<br>
+<img src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-9-RDD.jpg" alt="图9-9 RDD执行过程的一个实例"><br>
+图9-9 RDD执行过程的一个实例<br>
+上述这一系列处理称为一个“血缘关系（Lineage）”，即DAG拓扑排序的结果。采用惰性调用，通过血缘关系连接起来的一系列RDD操作就可以实现管
+道化（pipeline），避免了多次转换操作之间数据同步的等待，而且不用担心有过多的中间数据，因为这些具有血缘关系的操作都管道化了，一个操作得到
+的结果不需要保存为中间数据，而是直接管道式地流入到下一个操作进行处理。同时，这种通过血缘关系把一系列操作进行管道化连接的设计方式，也使得管道中每
+次操作的计算变得相对简单，保证了每个操作在处理逻辑上的单一性；相反，在MapReduce的设计中，为了尽可能地减少MapReduce过程，在单个
+MapReduce中会写入过多复杂的逻辑。<br>
+例1：一个Spark的“Hello World”程序<br>
+这里以一个“Hello World”入门级Spark程序来解释RDD执行过程，这个程序的功能是读取一个HDFS文件，计算出包含字符串“Hello World”的行数。</p>
+<p>启动pyspark</p>
+<pre><code>PYSPARK_PYTHON=python3 ./bin/pyspark
+</code></pre>
+<div class="callout callout-note">
+<p>Spark 2.1.0仅支持Python 2.7+/3.4+的版本。本系列教程统一使用Python 3.4以上的版本。在Ubuntu 
+16.04中已经自带了Python 3.5,就不用再安装Python.如果你的系统中仍未安装好Python 3.4以上的版本，请安装Python
+ 3.4以上的版本</p>
+</div>
+<p>在pyspark的交互环境下，输入如下代码</p>
+<pre><code>fileRDD = sc.textFile('hdfs://localhost:9000/test.txt')
+def contains(line):
+...     return 'hello world' in line
+filterRDD = fileRDD.filter(contains)
+filterRDD.cache()
+filterRDD.count()
+</code></pre>
+<p>可以看出，一个Spark应用程序，基本是基于RDD的一系列计算操作。第1行代码从HDFS文件中读取数据创建一个RDD；第2、3行定义一个过
+滤函数;第4行代码对fileRDD进行转换操作得到一个新的RDD，即filterRDD；第5行代码表示对filterRDD进行持久化，把它保存在
+内存或磁盘中（这里采用cache接口把数据集保存在内存中），方便后续重复使用，当数据被反复访问时（比如查询一些热点数据，或者运行迭代算法），这是
+非常有用的，而且通过cache()可以缓存非常大的数据集，支持跨越几十甚至上百个节点；第5行代码中的count()是一个行动操作，用于计算一个
+RDD集合中包含的元素个数。这个程序的执行过程如下：<br>
+*  创建这个Spark程序的执行上下文，即创建SparkContext对象；<br>
+*  从外部数据源（即HDFS文件）中读取数据创建fileRDD对象；<br>
+*  构建起fileRDD和filterRDD之间的依赖关系，形成DAG图，这时候并没有发生真正的计算，只是记录转换的轨迹；<br>
+*  执行到第6行代码时，count()是一个行动类型的操作，触发真正的计算，开始实际执行从fileRDD到filterRDD的转换操作，并把结果持久化到内存中，最后计算出filterRDD中包含的元素个数。</p>
+<h1>3.RDD特性</h1>
+<p>总体而言，Spark采用RDD以后能够实现高效计算的主要原因如下：<br>
+（1）高效的容错性。现有的分布式共享内存、键值存储、内存数据库等，为了实现容错，必须在集群节点之间进行数据复制或者记录日志，也就是在节点之间会发
+生大量的数据传输，这对于数据密集型应用而言会带来很大的开销。在RDD的设计中，数据只读，不可修改，如果需要修改数据，必须从父RDD转换到子
+RDD，由此在不同RDD之间建立了血缘关系。所以，RDD是一种天生具有容错机制的特殊集合，不需要通过数据冗余的方式（比如检查点）实现容错，而只需
+通过RDD父子依赖（血缘）关系重新计算得到丢失的分区来实现容错，无需回滚整个系统，这样就避免了数据复制的高开销，而且重算过程可以在不同节点之间并
+行进行，实现了高效的容错。此外，RDD提供的转换操作都是一些粗粒度的操作（比如map、filter和join），RDD依赖关系只需要记录这种粗粒
+度的转换操作，而不需要记录具体的数据和各种细粒度操作的日志（比如对哪个数据项进行了修改），这就大大降低了数据密集型应用中的容错开销；<br>
+（2）中间结果持久化到内存。数据在内存中的多个RDD操作之间进行传递，不需要“落地”到磁盘上，避免了不必要的读写磁盘开销；<br>
+（3）存放的数据可以是Java对象，避免了不必要的对象序列化和反序列化开销。</p>
+<h1>4. RDD之间的依赖关系</h1>
+<p>RDD中不同的操作会使得不同RDD中的分区会产生不同的依赖。RDD中的依赖关系分为窄依赖（Narrow Dependency）与宽依赖（Wide Dependency），图9-10展示了两种依赖之间的区别。<br>
+窄依赖表现为一个父RDD的分区对应于一个子RDD的分区，或多个父RDD的分区对应于一个子RDD的分区；比如图9-10(a)中，RDD1是RDD2
+的父RDD，RDD2是子RDD，RDD1的分区1，对应于RDD2的一个分区（即分区4）；再比如，RDD6和RDD7都是RDD8的父
+RDD，RDD6中的分区（分区15）和RDD7中的分区（分区18），两者都对应于RDD8中的一个分区（分区21）。<br>
+宽依赖则表现为存在一个父RDD的一个分区对应一个子RDD的多个分区。比如图9-10(b)中，RDD9是RDD12的父RDD，RDD9中的分区24对应了RDD12中的两个分区（即分区27和分区28）。<br>
+总体而言，如果父RDD的一个分区只被一个子RDD的一个分区所使用就是窄依赖，否则就是宽依赖。窄依赖典型的操作包括map、filter、union等，宽依赖典型的操作包括groupByKey、sortByKey等。对于连接（join）操作，可以分为两种情况。<br>
+（1）对输入进行协同划分，属于窄依赖（如图9-10(a)所示）。所谓协同划分（co-partitioned）是指多个父RDD的某一分区的所有“键（key）”，落在子RDD的同一个分区内，不会产生同一个父RDD的某一分区，落在子RDD的两个分区的情况。<br>
+（2）对输入做非协同划分，属于宽依赖，如图9-10(b)所示。<br>
+对于窄依赖的RDD，可以以流水线的方式计算所有父分区，不会造成网络之间的数据混合。对于宽依赖的RDD，则通常伴随着Shuffle操作，即首先需要计算好所有父分区数据，然后在节点之间进行Shuffle。<br>
+<img src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-10-.jpg" alt="图9-10 窄依赖与宽依赖的区别"><br>
+图9-10 窄依赖与宽依赖的区别<br>
+Spark的这种依赖关系设计，使其具有了天生的容错性，大大加快了Spark的执行速度。因为，RDD数据集通过“血缘关系”记住了它是如何从其它
+RDD中演变过来的，血缘关系记录的是粗颗粒度的转换操作行为，当这个RDD的部分分区数据丢失时，它可以通过血缘关系获取足够的信息来重新运算和恢复丢
+失的数据分区，由此带来了性能的提升。相对而言，在两种依赖关系中，窄依赖的失败恢复更为高效，它只需要根据父RDD分区重新计算丢失的分区即可（不需要
+重新计算所有分区），而且可以并行地在不同节点进行重新计算。而对于宽依赖而言，单个节点失效通常意味着重新计算过程会涉及多个父RDD分区，开销较大。
+此外，Spark还提供了数据检查点和记录日志，用于持久化中间RDD，从而使得在进行失败恢复时不需要追溯到最开始的阶段。在进行故障恢复
+时，Spark会对数据检查点开销和重新计算RDD分区的开销进行比较，从而自动选择最优的恢复策略。</p>
+<h1>5.阶段的划分</h1>
+<p>Spark通过分析各个RDD的依赖关系生成了DAG，再通过分析各个RDD中的分区之间的依赖关系来决定如何划分阶段，具体划分方法是：在DAG
+中进行反向解析，遇到宽依赖就断开，遇到窄依赖就把当前的RDD加入到当前的阶段中；将窄依赖尽量划分在同一个阶段中，可以实现流水线计算（具体的阶段划
+分算法请参见AMP实验室发表的论文《Resilient Distributed Datasets: A Fault-Tolerant 
+Abstraction for In-Memory Cluster 
+Computing》）。例如，如图9-11所示，假设从HDFS中读入数据生成3个不同的RDD（即A、C和E），通过一系列转换操作后再将计算结果保
+存回HDFS。对DAG进行解析时，在依赖图中进行反向解析，由于从RDD A到RDD B的转换以及从RDD B和F到RDD 
+G的转换，都属于宽依赖，因此，在宽依赖处断开后可以得到三个阶段，即阶段1、阶段2和阶段3。可以看出，在阶段2中，从map到union都是窄依赖，
+这两步操作可以形成一个流水线操作，比如，分区7通过map操作生成的分区9，可以不用等待分区8到分区9这个转换操作的计算结束，而是继续进行
+union操作，转换得到分区13，这样流水线执行大大提高了计算的效率。<br>
+<img src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-11-RDD.jpg" alt="图9-11根据RDD分区的依赖关系划分阶段"><br>
+图9-11根据RDD分区的依赖关系划分阶段<br>
+由上述论述可知，把一个DAG图划分成多个“阶段”以后，每个阶段都代表了一组关联的、相互之间没有Shuffle依赖关系的任务组成的任务集合。每个任务集合会被提交给任务调度器（TaskScheduler）进行处理，由任务调度器将任务分发给Executor运行。</p>
+<h1>6.RDD运行过程</h1>
+<p>通过上述对RDD概念、依赖关系和阶段划分的介绍，结合之前介绍的Spark运行基本流程，这里再总结一下RDD在Spark架构中的运行过程（如图9-12所示）：<br>
+（1）创建RDD对象；<br>
+（2）SparkContext负责计算RDD之间的依赖关系，构建DAG；<br>
+（3）DAGScheduler负责把DAG图分解成多个阶段，每个阶段中包含了多个任务，每个任务会被任务调度器分发给各个工作节点（Worker Node）上的Executor去执行。<br>
+<img src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-12-RDDSpark.jpg" alt="图9-12 RDD在Spark中的运行过程"><br>
+图9-12 RDD在Spark中的运行过程</p>
+<p><img src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/Spark.jpg" alt=""><br>
+<img src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/Spark.png" alt=""></p>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1681-2/" title="Spark入门：RDD的设计与运行原理(Python版)">http://dblab.xmu.edu.cn/blog/1681-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="1.3Spark%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E7%9A%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

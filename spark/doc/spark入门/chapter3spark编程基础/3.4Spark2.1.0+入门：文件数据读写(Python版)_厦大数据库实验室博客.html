@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark2.1.0+入门：文件数据读写(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Spark入门：共享变量(Python版)" href="http://dblab.xmu.edu.cn/blog/1707-2/">
+<link rel="next" title="子雨大数据之Spark入门教程(Python版)" href="http://dblab.xmu.edu.cn/blog/1709-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1708-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1708-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1708 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1708" class="post-1708 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark2.1.0+入门：文件数据读写(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-05T19:14:27+00:00">2017年12月5日</time> <span class="updated">(updated: <time class="updated" datetime="2017-12-06T11:16:29+00:00">2017年12月6日</time>)</span></span><span class="views" id="views"><i class="fa fa-eye"></i> 5207</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程(Python版)首页</a></p>
+<p>除了可以对本地文件系统进行读写以外，Spark还支持很多其他常见的文件格式（如文本文件、JSON、SequenceFile等）和文件系统
+（如HDFS、Amazon S3等）和数据库（如MySQL、HBase、Hive等）。数据库的读写我们将在Spark 
+SQL部分介绍，因此，这里只介绍文件系统的读写和不同文件格式的读写。<br>
+<span id="more-1708"></span><br>
+请进入Linux系统，打开“终端”，进入Shell命令提示符状态，然后，在“/usr/local/spark/mycode”目录下，新建一个
+wordcount子目录（如果已经存在就不用创建），并在“/usr/local/spark/mycode/wordcount”目录下新建一个包含
+了一些语句的文本文件word.txt（你可以在文本文件中随意输入一些单词，用空格隔开）。</p>
+<p>首先，请登录Linux系统(要注意记住登录采用的用户名，本教程统一采用hadoop用户名进行登录)，打开“终端”（可以在Linux系统中使用Ctrl+Alt+T组合键开启终端），进入shell命令提示符状态，然后执行以下命令进入pyspark：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark</span></li><li class="L1"><span class="pln">./bin/pyspark</span></li><li class="L2"><span class="pln">....</span><span class="com">#这里省略启动过程显示的一大堆信息</span></li><li class="L3"><span class="pln">&gt;&gt;&gt;</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>启动进入pyspark需要一点时间，在进入pyspark后，我们可能还需要到Linux文件系统中对相关目录下的文件进行编辑和操作（比如要查
+看spark程序执行过程生成的文件），这个无法在pyspark中完成，因此，这里再打开第二个终端，用来在Linux系统的Shell命令提示符下操
+作。</p>
+<h1>文件系统的数据读写</h1>
+<p>下面分别介绍本地文件系统的数据读写和分布式文件系统HDFS的数据读写。</p>
+<h2>本地文件系统的数据读写</h2>
+<p>首先，请在第二个终端窗口下操作，用下面命令到达“/usr/local/spark/mycode/wordcount”目录，查看一下上面已经建好的word.txt的内容：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark/mycode/wordcount</span></li><li class="L1"><span class="kwd">cat </span><span class="pln">word.txt</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>cat命令会把word.txt文件的内容全部显示到屏幕上。</p>
+<p>现有让我们切换回到第一个终端，也就是spark-shell，然后输入下面命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> textFile </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/wordcount/word.txt"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>上面代码中，sc.textFile()中的这个textFile是sc的一个方法名称，这个方法用来加载文件数据。这两个textFile不是一
+个东西，不要混淆。实际上，val后面的是变量textFile，你完全可以换个变量名称，比如,val lines = 
+sc.textFile(“file:///usr/local/spark/mycode/wordcount/word.txt”)。这里使用相同名
+称，就是有意强调二者的区别。<br>
+注意，要加载本地文件，必须采用“file:///”开头的这种格式。执行上上面这条命令以后，并不会马上显示结果，因为，Spark采用惰性机制，只有遇到“行动”类型的操作，才会从头到尾执行所有操作。所以，下面我们执行一条“行动”类型的语句，就可以看到结果：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> textFile</span><span class="pun">.</span><span class="pln">first</span><span class="pun">()</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>first()是一个“行动”（Action）类型的操作，会启动真正的计算过程，从文件中加载数据到变量textFile中，并取出第一行文本。屏幕上会显示很多反馈信息，这里不再给出，你可以从这些结果信息中，找到word.txt文件中的第一行的内容。</p>
+<p>正因为Spark采用了惰性机制，在执行转换操作的时候，即使我们输入了错误的语句，pyspark也不会马上报错，而是等到执行“行动”类型的语句时启动真正的计算，那个时候“转换”操作语句中的错误就会显示出来，比如：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">textFile </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/wordcount/word123.txt"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>上面我们使用了一个根本就不存在的word123.txt，执行上面语句时，pyspark根本不会报错，因为，没有遇到“行动”类型的first()操作之前，这个加载操作时不会真正执行的。然后，我们执行一个“行动”类型的操作first()，如下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> textFile</span><span class="pun">.</span><span class="pln">first</span><span class="pun">()</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>执行上面语句后，你会发现，会返回错误信息，其中有四个醒目的中文文字“拒绝连接”，因为，这个word123.txt文件根本就不存在。</p>
+<p>好了，现在我们可以练习一下如何把textFile变量中的内容再次写回到另外一个文本文件wordback.txt中：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> textFile </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/wordcount/word.txt"</span><span class="pun">)</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> textFile</span><span class="pun">.</span><span class="pln">saveAsTextFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/wordcount/writeback.txt"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>saveAsTextFile()是一个“行动”（Action）类型的操作，所以，马上会执行真正的计算过程，从word.txt中加载数据到变
+量textFile中，然后，又把textFile中的数据写回到writeback.txt中。现在我们到/usr/local/spark
+/mycode/wordcount/目录看一下，会发现，确实多了一个writeback.txt，但是，和我们预期的不一样，它不是一个文件，而是一
+个文件夹（writeback.txt作为文件夹名称当然是没有问题的，虽然不符合我们平时的习惯）。现在让我们切换到Linux 
+Shell命令提示符窗口中，执行下面命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">cd </span><span class="pun">/</span><span class="pln">usr</span><span class="pun">/</span><span class="pln">local</span><span class="pun">/</span><span class="pln">spark</span><span class="pun">/</span><span class="pln">mycode</span><span class="pun">/</span><span class="pln">wordcount</span><span class="pun">/</span><span class="pln">writeback</span><span class="pun">.</span><span class="pln">txt</span><span class="pun">/</span></li><li class="L1"><span class="pln">ls</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>执行结果中可以看到，writeback.txt这个目录下面包含两个文件：</p>
+<pre><code>part-00000
+_SUCCESS
+</code></pre>
+<p>也就是说，该目录下包含两个文件，我们可以使用cat命令查看一下part-00000文件（注意:part-后面是五个零）：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cat </span><span class="pln">part-00000</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>显示结果，是和上面word.txt中的内容一样的。<br>
+现在的问题是，我们如果想再次把数据加载在RDD中，应该使用哪个文件呢？答案很简单，只要使用writeback.txt这个目录即可，如下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> textFile </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/wordcount/writeback.txt"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<h2>分布式文件系统HDFS的数据读写</h2>
+<p>为了能够读取HDFS中的文件，请首先启动Hadoop中的HDFS组件。注意，之前我们在“Spark安装”这章内容已经介绍了如何安装
+Hadoop和Spark，所以，这里我们可以使用以下命令直接启动Hadoop中的HDFS组件（由于用不到MapReduce组件，所以，不需要启动
+MapReduce或者YARN）。请到第二个终端窗口，使用Linux Shell命令提示符状态，然后输入下面命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/hadoop</span></li><li class="L1"><span class="pln">./sbin/start-dfs.sh</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>启动结束后，HDFS开始进入可用状态。如果你在HDFS文件系统中，还没有为当前Linux登录用户创建目录(本教程统一使用用户名hadoop登录Linux系统)，请使用下面命令创建：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/hdfs dfs </span><span class="kwd">-mkdir </span><span class="pln">-p /user/hadoop</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>也就是说，HDFS文件系统为Linux登录用户开辟的默认目录是“/user/用户名”（注意：是user，不是usr），本教程统一使用用户名
+hadoop登录Linux系统，所以，上面创建了“/user/hadoop”目录，再次强调，这个目录是在HDFS文件系统中，不在本地文件系统中。
+创建好以后，下面我们使用命令查看一下HDFS文件系统中的目录和文件：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/hdfs dfs </span><span class="kwd">-ls </span><span class="pln">.</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>上面命令中，最后一个点号“.”，表示要查看Linux当前登录用户hadoop在HDFS文件系统中与hadoop对应的目录下的文件，也就是查看HDFS文件系统中“/user/hadoop/”目录下的文件，所以，下面两条命令是等价的：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/hdfs dfs </span><span class="kwd">-ls </span><span class="pln">.</span></li><li class="L1"><span class="pln">./bin/hdfs dfs </span><span class="kwd">-ls </span><span class="pln">/user/hadoop</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>如果要查看HDFS文件系统根目录下的内容，需要使用下面命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/hdfs dfs </span><span class="kwd">-ls </span><span class="pln">/</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>下面，我们把本地文件系统中的“/usr/local/spark/mycode/wordcount/word.txt”上传到分布式文件系统HDFS中（放到hadoop用户目录下）：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/hdfs dfs -put /usr/local/spark/mycode/wordcount/word.txt .</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>然后，用命令查看一下HDFS的hadoop用户目录下是否多了word.txt文件，可以使用下面命令列出hadoop目录下的内容：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/hdfs dfs </span><span class="kwd">-ls </span><span class="pln">.</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>可以看到，确实多了一个word.txt文件，我们使用cat命令查看一个HDFS中的word.txt文件的内容，命令如下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/hdfs dfs </span><span class="kwd">-cat </span><span class="pln">./word.txt</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>上面命令执行后，就会看到HDFS中word.txt的内容了。</p>
+<p>现在，让我们切换回到pyspark窗口，编写语句从HDFS中加载word.txt文件，并显示第一行文本内容：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> val textFile </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"hdfs://localhost:9000/user/hadoop/word.txt"</span><span class="pun">)</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> textFile</span><span class="pun">.</span><span class="pln">first</span><span class="pun">()</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>执行上面语句后，就可以看到HDFS文件系统中（不是本地文件系统）的word.txt的第一行内容了。</p>
+<p>需要注意的是，sc.textFile(“hdfs://localhost:9000/user/hadoop/word.txt”)
+中，“hdfs://localhost:9000/”是前面介绍Hadoop安装内容时确定下来的端口地址9000。实际上，也可以省略不写，如下三条
+语句都是等价的：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> val textFile </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"hdfs://localhost:9000/user/hadoop/word.txt"</span><span class="pun">)</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> val textFile </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"/user/hadoop/word.txt"</span><span class="pun">)</span></li><li class="L2"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> val textFile </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"word.txt"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>下面，我们再把textFile的内容写回到HDFS文件系统中（写到hadoop用户目录下）：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> val textFile </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"word.txt"</span><span class="pun">)</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> textFile</span><span class="pun">.</span><span class="pln">saveAsTextFile</span><span class="pun">(</span><span class="str">"writeback.txt"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>执行上面命令后，文本内容会被写入到HDFS文件系统的“/user/hadoop/writeback.txt”目录下，我们可以切换到Linux Shell命令提示符窗口查看一下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/hdfs dfs </span><span class="kwd">-ls </span><span class="pln">.</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>执行上述命令后，在执行结果中，可以看到有个writeback.txt目录，下面我们查看该目录下有什么文件：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/hdfs dfs </span><span class="kwd">-ls </span><span class="pln">./writeback.txt</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>执行结果中，可以看到存在两个文件：part-00000和_SUCCESS。我们使用下面命令输出part-00000文件的内容（注意：part-00000里面有五个零）：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">./bin/hdfs dfs </span><span class="kwd">-cat </span><span class="pln">./writeback.txt/part-00000</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>执行结果中，就可以看到和word.txt文件中一样的文本内容。</p>
+<p>当需要再次把writeback.txt中的内容加载到RDD中时，只需要加载writeback.txt目录即可，不需要使用part-00000文件，如下所示：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> textFile </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"hdfs://localhost:9000/user/hadoop/writeback.txt"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<h1>不同文件格式的读写</h1>
+<h2>文本文件</h2>
+<p>实际上，我们在上面演示的都是文本文件的读写，因此，这里不再赘述，只是简单再总结一下。<br>
+把本地文件系统中的文本文件加载到RDD中的语句如下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> rdd </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/wordcount/word.txt"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>当我们给textFile()函数传递一个“包含完整路径的文件名”时，就会把这个文件加载到RDD中。如果我们给textFile()函数传递的不是文件名，而是一个目录，则该目录下的所有文件内容都会被读取到RDD中。</p>
+<p>关于把RDD中的数据保存到文本文件，可以采用如下语句：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> rdd</span><span class="pun">.</span><span class="pln">saveAsTextFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/wordcount/outputFile"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>正像上面我们已经介绍的那样，我们在saveAsTextFile()函数的参数中给出的是目录，不是文件名，RDD中的数据会被保存到给定的目录下。</p>
+<h2>JSON</h2>
+<p>JSON(JavaScript Object Notation) 是一种轻量级的数据交换格式。<br>
+Spark提供了一个JSON样例数据文件，存放在“/usr/local/spark/examples/src/main/resources/people.json”中。people.json文件的内容如下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-json prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">{</span><span class="str">"name"</span><span class="pun">:</span><span class="str">"Michael"</span><span class="pun">}</span></li><li class="L1"><span class="pun">{</span><span class="str">"name"</span><span class="pun">:</span><span class="str">"Andy"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"age"</span><span class="pun">:</span><span class="lit">30</span><span class="pun">}</span></li><li class="L2"><span class="pun">{</span><span class="str">"name"</span><span class="pun">:</span><span class="str">"Justin"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"age"</span><span class="pun">:</span><span class="lit">19</span><span class="pun">}</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">json</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>我们下面可以对这个样例数据文件进行解析。<br>
+下面请在Linux系统的Shell命令提示符下操作，请进入“/usr/local/spark/mycode”目录，并新建一个json子目录，代码如下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark/mycode</span></li><li class="L1"><span class="kwd">mkdir </span><span class="pln">json</span></li><li class="L2"><span class="kwd">cd </span><span class="pln">json</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>在编写解析程序之前，我们首先来看一下把本地文件系统中的people.json文件加载到RDD中以后，数据是什么形式，请在spark-shell中执行如下操作：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> jsonStr </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/examples/src/main/resources/people.json"</span><span class="pun">)</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> jsonStr</span><span class="pun">.</span><span class="pln">foreach</span><span class="pun">(</span><span class="kwd">print</span><span class="pun">)</span></li><li class="L2"><span class="pun">{</span><span class="str">"name"</span><span class="pun">:</span><span class="str">"Michael"</span><span class="pun">}</span></li><li class="L3"><span class="pun">{</span><span class="str">"name"</span><span class="pun">:</span><span class="str">"Andy"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"age"</span><span class="pun">:</span><span class="lit">30</span><span class="pun">}</span></li><li class="L4"><span class="pun">{</span><span class="str">"name"</span><span class="pun">:</span><span class="str">"Justin"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"age"</span><span class="pun">:</span><span class="lit">19</span><span class="pun">}</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>从上面执行结果可以看出，people.json文件加载到RDD中以后，在RDD中存在三个字符串。我们下面要做的事情，就是把这三个JSON格
+式的字符串解析出来，比如说，第一个字符串{“name”:”Michael”}，经过解析后，解析得到key是”name”，value
+是”Michael”。<br>
+现在我们编写程序完成对上面字符串的解析工作。<br>
+Scala中有一个自带的JSON库——scala.util.parsing.json.JSON，可以实现对JSON数据的解析。
+JSON.parseFull(jsonString:String)函数，以一个JSON字符串作为输入并进行解析，如果解析成功则返回一个
+Some(map: Map[String, Any])，如果解析失败则返回None。<br>
+因此，我们可以使用模式匹配来处理解析结果</p>
+<p>请执行以下命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark/mycode/json</span></li><li class="L1"><span class="kwd">vim </span><span class="pln">testjson.py</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>在testjson.py代码文件中输入以下内容：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">from</span><span class="pln"> pyspark </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">SparkContext</span></li><li class="L1"><span class="kwd">import</span><span class="pln"> json</span></li><li class="L2"><span class="pln">sc </span><span class="pun">=</span><span class="pln"> </span><span class="typ">SparkContext</span><span class="pun">(</span><span class="str">'local'</span><span class="pun">,</span><span class="str">'JSONAPP'</span><span class="pun">)</span></li><li class="L3"><span class="pln">inputFile </span><span class="pun">=</span><span class="pln">  </span><span class="str">"file:///home/dblab/people.json"</span></li><li class="L4"><span class="pln">jsonStrs </span><span class="pun">=</span><span class="pln"> sc</span><span class="pun">.</span><span class="pln">textFile</span><span class="pun">(</span><span class="pln">inputFile</span><span class="pun">)</span></li><li class="L5"><span class="pln">result </span><span class="pun">=</span><span class="pln"> jsonStrs</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> s </span><span class="pun">:</span><span class="pln"> json</span><span class="pun">.</span><span class="pln">loads</span><span class="pun">(</span><span class="pln">s</span><span class="pun">))</span></li><li class="L6"><span class="pln">result</span><span class="pun">.</span><span class="pln">foreach</span><span class="pun">(</span><span class="kwd">print</span><span class="pun">)</span><span class="pln">    </span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>接下请执行如下代码：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">python3 testjson.py</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>执行后可以在屏幕上的大量输出信息中找到如下结果：</p>
+<pre><code>执行后可以在屏幕上的大量输出信息中找到如下结果：
+</code></pre>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1708-2/" title="Spark2.1.0+入门：文件数据读写(Python版)">http://dblab.xmu.edu.cn/blog/1708-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="3.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%86%99(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！" style="display: none;"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

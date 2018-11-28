@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark2.1.0+入门：文件流(DStream)(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Python：循环语句" href="http://dblab.xmu.edu.cn/blog/1734/">
+<link rel="next" title="Python：函数" href="http://dblab.xmu.edu.cn/blog/1740-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1739-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1739-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1739 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1739" class="post-1739 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark2.1.0+入门：文件流(DStream)(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-11T16:31:03+00:00">2017年12月11日</time></span><span class="views" id="views"><i class="fa fa-eye"></i> 1767</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p>Spark支持从兼容HDFS API的文件系统中读取数据，创建数据流。<br>
+<span id="more-1739"></span></p>
+<p>为了能够演示文件流的创建，我们需要首先创建一个日志目录，并在里面放置两个模拟的日志文件。请在Linux系统中打开另一个终端，进入Shell命令提示符状态：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark/mycode</span></li><li class="L1"><span class="kwd">mkdir </span><span class="pln">streaming</span></li><li class="L2"><span class="kwd">cd </span><span class="pln">streaming</span></li><li class="L3"><span class="kwd">mkdir </span><span class="pln">logfile</span></li><li class="L4"><span class="kwd">cd </span><span class="pln">logfile</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>然后，在logfile中新建两个日志文件log1.txt和log2.txt，里面可以随便输入一些内容。<br>
+比如，我们在log1.txt中输入以下内容：</p>
+<pre><code>I love Hadoop
+I love Spark
+Spark is fast
+</code></pre>
+<p>下面我们就进入pyspark创建文件流。请另外打开一个终端窗口，启动进入pyspark。</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> </span><span class="kwd">from</span><span class="pln"> operator </span><span class="kwd">import</span><span class="pln"> add</span></li><li class="L1"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> </span><span class="kwd">from</span><span class="pln"> pyspark </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">SparkContext</span></li><li class="L2"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> </span><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">streaming </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">StreamingContext</span></li><li class="L3"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> ssc </span><span class="pun">=</span><span class="pln"> </span><span class="typ">StreamingContext</span><span class="pun">(</span><span class="pln">sc</span><span class="pun">,</span><span class="pln"> </span><span class="lit">20</span><span class="pun">)</span></li><li class="L4"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> lines </span><span class="pun">=</span><span class="pln"> ssc</span><span class="pun">.</span><span class="pln">textFileStream</span><span class="pun">(</span><span class="str">'file:///usr/local/spark/mycode/streaming/logfile'</span><span class="pun">)</span></li><li class="L5"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> words </span><span class="pun">=</span><span class="pln"> lines</span><span class="pun">.</span><span class="pln">flatMap</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> line</span><span class="pun">:</span><span class="pln"> line</span><span class="pun">.</span><span class="pln">split</span><span class="pun">(</span><span class="str">' '</span><span class="pun">))</span></li><li class="L6"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> wordCounts </span><span class="pun">=</span><span class="pln"> words</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> x </span><span class="pun">:</span><span class="pln"> </span><span class="pun">(</span><span class="pln">x</span><span class="pun">,</span><span class="lit">1</span><span class="pun">)).</span><span class="pln">reduceByKey</span><span class="pun">(</span><span class="pln">add</span><span class="pun">)</span></li><li class="L7"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> wordCounts</span><span class="pun">.</span><span class="pln">pprint</span><span class="pun">()</span></li><li class="L8"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> ssc</span><span class="pun">.</span><span class="pln">start</span><span class="pun">()</span><span class="pln"> </span></li><li class="L9"><span class="pun">//实际上，当你输入这行回车后，</span><span class="typ">Spark</span><span class="pln"> </span><span class="typ">Streaming</span><span class="pun">就开始进行循环监听，下面的</span><span class="pln">ssc</span><span class="pun">.</span><span class="pln">awaitTermination</span><span class="pun">()是无法输入到屏幕上的，但是，为了程序完整性，这里还是给出</span><span class="pln">ssc</span><span class="pun">.</span><span class="pln">awaitTermination</span><span class="pun">()</span></li><li class="L0"><span class="pun">&gt;&gt;&gt;</span><span class="pln"> ssc</span><span class="pun">.</span><span class="pln">awaitTermination</span><span class="pun">()</span></li><li class="L1"><span class="pln">&nbsp;</span></li><li class="L2"><span class="pln">scala</span><span class="pun">&gt;</span><span class="pln"> val lines </span><span class="pun">=</span><span class="pln"> ssc</span><span class="pun">.</span><span class="pln">textFileStream</span><span class="pun">(</span><span class="str">"file:///usr/local/spark/mycode/streaming/logfile"</span><span class="pun">)</span></li><li class="L3"><span class="pln">scala</span><span class="pun">&gt;</span><span class="pln"> val words </span><span class="pun">=</span><span class="pln"> lines</span><span class="pun">.</span><span class="pln">flatMap</span><span class="pun">(</span><span class="pln">_</span><span class="pun">.</span><span class="pln">split</span><span class="pun">(</span><span class="str">" "</span><span class="pun">))</span></li><li class="L4"><span class="pln">scala</span><span class="pun">&gt;</span><span class="pln"> val wordCounts </span><span class="pun">=</span><span class="pln"> words</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="pln">x </span><span class="pun">=&gt;</span><span class="pln"> </span><span class="pun">(</span><span class="pln">x</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1</span><span class="pun">)).</span><span class="pln">reduceByKey</span><span class="pun">(</span><span class="pln">_ </span><span class="pun">+</span><span class="pln"> _</span><span class="pun">)</span><span class="pln"> </span></li><li class="L5"><span class="pln">scala</span><span class="pun">&gt;</span><span class="pln"> wordCounts</span><span class="pun">.</span><span class="pln">pprint</span><span class="pun">(</span><span class="lit">10</span><span class="pun">)</span></li><li class="L6"><span class="pln">scala</span><span class="pun">&gt;</span><span class="pln"> ssc</span><span class="pun">.</span><span class="pln">start</span><span class="pun">()</span><span class="pln">  </span><span class="pun">//实际上，当你输入这行回车后，</span><span class="typ">Spark</span><span class="pln"> </span><span class="typ">Streaming</span><span class="pun">就开始进行循环监听，下面的</span><span class="pln">ssc</span><span class="pun">.</span><span class="pln">awaitTermination</span><span class="pun">()是无法输入到屏幕上的，但是，为了程序完整性，这里还是给出</span><span class="pln">ssc</span><span class="pun">.</span><span class="pln">awaitTermination</span><span class="pun">()</span></li><li class="L7"><span class="pln">scala</span><span class="pun">&gt;</span><span class="pln"> ssc</span><span class="pun">.</span><span class="pln">awaitTermination</span><span class="pun">()</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>所以，上面在pyspark中执行的程序，一旦你输入ssc.start()以后，程序就开始自动进入循环监听状态，屏幕上会显示一堆的信息，如下：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pun">//这里省略若干屏幕信息</span></li><li class="L1"><span class="pun">-------------------------------------------</span></li><li class="L2"><span class="typ">Time</span><span class="pun">:</span><span class="pln"> </span><span class="lit">1479431100000</span><span class="pln"> ms</span></li><li class="L3"><span class="pun">-------------------------------------------</span></li><li class="L4"><span class="pun">//这里省略若干屏幕信息</span></li><li class="L5"><span class="pun">-------------------------------------------</span></li><li class="L6"><span class="typ">Time</span><span class="pun">:</span><span class="pln"> </span><span class="lit">1479431120000</span><span class="pln"> ms</span></li><li class="L7"><span class="pun">-------------------------------------------</span></li><li class="L8"><span class="pun">//这里省略若干屏幕信息</span></li><li class="L9"><span class="pun">-------------------------------------------</span></li><li class="L0"><span class="typ">Time</span><span class="pun">:</span><span class="pln"> </span><span class="lit">1479431140000</span><span class="pln"> ms</span></li><li class="L1"><span class="pun">-------------------------------------------</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>从上面的屏幕显示信息可以看出，Spark 
+Streaming每隔20秒就监听一次。但是，你这时会感到奇怪，既然启动监听了，为什么程序没有把我们刚才放置在”/usr/local/spark
+/mycode/streaming/logfile”目录下的log1.txt和log2.txt这两个文件中的内容读取出来呢？原因是，监听程序只监
+听”/usr/local/spark/mycode/streaming/logfile”目录下在程序启动后新增的文件，不会去处理历史上已经存在的
+文件。所以，为了能够让程序读取文件内容并显示到屏幕上，让我们能够看到效果，这时，我们需要到”/usr/local/spark/mycode
+/streaming/logfile”目录下再新建一个log3.txt文件，请打开另外一个终端窗口（我们称为shell窗口），当前正在执行监听工
+作的spark-shell窗口依然保留。请在shell窗口中执行Linux操作，在”/usr/local/spark/mycode
+/streaming/logfile”目录下再新建一个log3.txt文件，里面随便输入一些英文单词，创建完成以后，再切换回到spark-
+shell窗口。请等待20秒（因为我们刚才设置的是每隔20秒就监听一次，如果你创建文件动作很快，可能20秒还没到）。现在你会发现屏幕上不断输出新
+的信息，导致你无法看清楚单词统计结果是否已经被打印到屏幕上。所以，你现在必须停止这个监听程序，否则它一直在pyspark窗口中不断循环监听，停止
+的方法是，按键盘Ctrl+D，或者Ctrl+C。停止以后，就彻底停止，并且退出了pyspark状态，回到了Shell命令提示符状态。然后，你就可
+以看到屏幕上，在一大堆输出信息中，你可以找到打印出来的单词统计信息。</p>
+<p>好了，上面我们是在spark-shell中直接执行代码，但是，很多时候，我们需要编写独立应用程序进行监听，所以，下面我们介绍如何采用独立应用程序的方式实现上述监听文件夹的功能。</p>
+<p>请打开一个Linux终端窗口，进入shell命令提示符状态，然后，执行下面命令：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark/mycode/streaming</span></li><li class="L1"><span class="kwd">vim </span><span class="pln">TestStreaming.py</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>在TestStreaming.py中输入如下代码：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">from</span><span class="pln"> operator </span><span class="kwd">import</span><span class="pln"> add</span></li><li class="L1"><span class="kwd">from</span><span class="pln"> pyspark </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">SparkContext</span><span class="pun">,</span><span class="pln"> </span><span class="typ">SparkConf</span></li><li class="L2"><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">streaming </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">StreamingContext</span></li><li class="L3"><span class="pln">conf </span><span class="pun">=</span><span class="pln"> </span><span class="typ">SparkConf</span><span class="pun">()</span></li><li class="L4"><span class="pln">conf</span><span class="pun">.</span><span class="pln">setAppName</span><span class="pun">(</span><span class="str">'TestDStream'</span><span class="pun">)</span></li><li class="L5"><span class="pln">conf</span><span class="pun">.</span><span class="pln">setMaster</span><span class="pun">(</span><span class="str">'local[2]'</span><span class="pun">)</span></li><li class="L6"><span class="pln">sc </span><span class="pun">=</span><span class="pln"> </span><span class="typ">SparkContext</span><span class="pun">(</span><span class="pln">conf </span><span class="pun">=</span><span class="pln"> conf</span><span class="pun">)</span></li><li class="L7"><span class="pln">ssc </span><span class="pun">=</span><span class="pln"> </span><span class="typ">StreamingContext</span><span class="pun">(</span><span class="pln">sc</span><span class="pun">,</span><span class="pln"> </span><span class="lit">20</span><span class="pun">)</span></li><li class="L8"><span class="pln">lines </span><span class="pun">=</span><span class="pln"> ssc</span><span class="pun">.</span><span class="pln">textFileStream</span><span class="pun">(</span><span class="str">'file:///usr/local/spark/mycode/streaming/logfile'</span><span class="pun">)</span></li><li class="L9"><span class="pln">words </span><span class="pun">=</span><span class="pln"> lines</span><span class="pun">.</span><span class="pln">flatMap</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> line</span><span class="pun">:</span><span class="pln"> line</span><span class="pun">.</span><span class="pln">split</span><span class="pun">(</span><span class="str">' '</span><span class="pun">))</span></li><li class="L0"><span class="pln">wordCounts </span><span class="pun">=</span><span class="pln"> words</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> x </span><span class="pun">:</span><span class="pln"> </span><span class="pun">(</span><span class="pln">x</span><span class="pun">,</span><span class="lit">1</span><span class="pun">)).</span><span class="pln">reduceByKey</span><span class="pun">(</span><span class="pln">add</span><span class="pun">)</span></li><li class="L1"><span class="pln">wordCounts</span><span class="pun">.</span><span class="pln">pprint</span><span class="pun">()</span></li><li class="L2"><span class="pln">ssc</span><span class="pun">.</span><span class="pln">start</span><span class="pun">()</span></li><li class="L3"><span class="pln">ssc</span><span class="pun">.</span><span class="pln">awaitTermination</span><span class="pun">()</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>保存成功后，执行在命令行中执行如下代码:</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">python3 TestStreaming.py</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1739-2/" title="Spark2.1.0+入门：文件流(DStream)(Python版)">http://dblab.xmu.edu.cn/blog/1739-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="5.4Spark2.1.0+%E5%85%A5%E9%97%A8%EF%BC%9A%E6%96%87%E4%BB%B6%E6%B5%81(DStream)(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！" style="display: block;"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

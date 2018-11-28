@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark2.1.0入门：Spark MLlib介绍(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Python：输入输出" href="http://dblab.xmu.edu.cn/blog/1758-2/">
+<link rel="next" title="Spark2.1.0入门：机器学习工作流(ML Pipelines)(Python版)" href="http://dblab.xmu.edu.cn/blog/1763-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1762-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1762-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1762 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1762" class="post-1762 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark2.1.0入门：Spark MLlib介绍(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-17T21:01:12+00:00">2017年12月17日</time></span><span class="views" id="views"><i class="fa fa-eye"></i> 2212</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p><span id="more-1762"></span></p>
+<h1>一、什么是机器学习</h1>
+<p>机器学习可以看做是一门人工智能的科学，该领域的主要研究对象是人工智能。机器学习利用数据或以往的经验，以此优化计算机程序的性能标准。一种经常引用的英文定义是：</p>
+<pre><code>A computer program is said to learn from experience E with respect to some class of tasks T and performance measure P, if its performance at tasks in T, as measured by P, improves with experience E。
+</code></pre>
+<p><img src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/ML.jpg" alt="机器学习"><br>
+机器学习强调三个关键词：算法、经验、性能，其处理过程如上图所示。在数据的基础上，通过算法构建出模型并对模型进行评估。评估的性能如果达到要求，就用
+该模型来测试其他的数据；如果达不到要求，就要调整算法来重新建立模型，再次进行评估。如此循环往复，最终获得满意的经验来处理其他的数据。机器学习技术
+和方法已经被成功应用到多个领域，比如个性推荐系统，金融反欺诈，语音识别，自然语言处理和机器翻译，模式识别，智能控制等。</p>
+<h1>二、基于大数据的机器学习</h1>
+<p>传统的机器学习算法，由于技术和单机存储的限制，只能在少量数据上使用。即以前的统计/机器学习依赖于数据抽样。但实际过程中样本往往很难做好随
+机，导致学习的模型不是很准确，在测试数据上的效果也可能不太好。随着 HDFS(Hadoop Distributed File System) 
+等分布式文件系统出现，存储海量数据已经成为可能。在全量数据上进行机器学习也成为了可能，这顺便也解决了统计随机性的问题。然而，由于 
+MapReduce 自身的限制，使得使用 MapReduce 
+来实现分布式机器学习算法非常耗时和消耗磁盘IO。因为通常情况下机器学习算法参数学习的过程都是迭代计算的，即本次计算的结果要作为下一次迭代的输入，
+这个过程中，如果使用 MapReduce，我们只能把中间结果存储磁盘，然后在下一次计算的时候从新读取，这对于迭代 
+频发的算法显然是致命的性能瓶颈。</p>
+<p>在大数据上进行机器学习，需要处理全量数据并进行大量的迭代计算，这要求机器学习平台具备强大的处理能力。Spark 
+立足于内存计算，天然的适应于迭代式计算。即便如此，对于普通开发者来说，实现一个分布式机器学习算法仍然是一件极具挑战的事情。幸运的是，Spark提
+供了一个基于海量数据的机器学习库，它提供了常用机器学习算法的分布式实现，开发者只需要有 Spark 
+基础并且了解机器学习算法的原理，以及方法相关参数的含义，就可以轻松的通过调用相应的 API 
+来实现基于海量数据的机器学习过程。其次，Spark-Shell的即席查询也是一个关键。算法工程师可以边写代码边运行，边看结果。spark提供的各
+种高效的工具正使得机器学习过程更加直观便捷。比如通过sample函数，可以非常方便的进行抽样。当然，Spark发展到后面，拥有了实时批计算，批处
+理，算法库，SQL、流计算等模块等，基本可以看做是全平台的系统。把机器学习作为一个模块加入到Spark中，也是大势所趋。</p>
+<h1>三、Spark 机器学习库MLLib</h1>
+<p>MLlib是Spark的机器学习（Machine 
+Learning）库，旨在简化机器学习的工程实践工作，并方便扩展到更大规模。MLlib由一些通用的学习算法和工具组成，包括分类、回归、聚类、协同
+过滤、降维等，同时还包括底层的优化原语和高层的管道API。具体来说，其主要包括以下几方面的内容：</p>
+<ol>
+<li>算法工具：常用的学习算法，如分类、回归、聚类和协同过滤；</li>
+<li>特征化工具：特征提取、转化、降维，和选择工具；</li>
+<li>管道(Pipeline)：用于构建、评估和调整机器学习管道的工具;</li>
+<li>持久性：保存和加载算法，模型和管道;</li>
+<li>实用工具：线性代数，统计，数据处理等工具。</li>
+</ol>
+<p>Spark 机器学习库从 1.2 版本以后被分为两个包：</p>
+<ul>
+<li>spark.mllib 包含基于RDD的原始算法API。Spark MLlib 历史比较长，在1.0 以前的版本即已经包含了，提供的算法实现都是基于原始的 RDD。</li>
+<li>spark.ml 则提供了基于DataFrames 高层次的API，可以用来构建机器学习工作流（PipeLine）。ML Pipeline 弥补了原始 MLlib 库的不足，向用户提供了一个基于 DataFrame 的机器学习工作流式 API 套件。</li>
+</ul>
+<p>使用 ML Pipeline 
+API可以很方便的把数据处理，特征转换，正则化，以及多个机器学习算法联合起来，构建一个单一完整的机器学习流水线。这种方式给我们提供了更灵活的方
+法，更符合机器学习过程的特点，也更容易从其他语言迁移。Spark官方推荐使用spark.ml。如果新的算法能够适用于机器学习管道的概念，就应该将
+其放到spark.ml包中，如：特征提取器和转换器。开发者需要注意的是，从Spark2.0开始，基于RDD的API进入维护模式（即不增加任何新的
+特性），并预期于3.0版本的时候被移除出MLLib。因此，我们将以ml包为主进行介绍。</p>
+<p>Spark在机器学习方面的发展非常快，目前已经支持了主流的统计和机器学习算法。纵观所有基于分布式架构的开源机器学习库，MLlib可以算是计
+算效率最高的。MLlib目前支持4种常见的机器学习问题: 分类、回归、聚类和协同过滤。下表列出了目前MLlib支持的主要的机器学习算法：<br>
+<img src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/MLTable.png" alt=""><br>
+在接下来的几个章节里，我们将从基本的机器学习算法入手，循序渐进的来学习Spark平台下的机器学习。</p>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1762-2/" title="Spark2.1.0入门：Spark MLlib介绍(Python版)">http://dblab.xmu.edu.cn/blog/1762-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="6.1Spark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20MLlib%E4%BB%8B%E7%BB%8D(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！" style="display: block;"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

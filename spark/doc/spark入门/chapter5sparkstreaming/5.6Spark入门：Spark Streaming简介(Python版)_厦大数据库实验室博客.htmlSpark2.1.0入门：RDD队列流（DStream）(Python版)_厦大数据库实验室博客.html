@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark2.1.0入门：RDD队列流（DStream）(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Spark2.1.0+入门：套接字流(DStream)(Python版)" href="http://dblab.xmu.edu.cn/blog/1741-2/">
+<link rel="next" title="Spark2.1.0+入门：Apache Kafka作为DStream数据源(Python版)" href="http://dblab.xmu.edu.cn/blog/1743-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1742-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1742-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1742 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1742" class="post-1742 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark2.1.0入门：RDD队列流（DStream）(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-11T18:55:03+00:00">2017年12月11日</time></span><span class="views" id="views"><i class="fa fa-eye"></i> 1150</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p>在调试Spark Streaming应用程序的时候，我们可以使用streamingContext.queueStream(queueOfRDD)创建基于RDD队列的DStream。<br>
+<span id="more-1742"></span></p>
+<p>下面是参考Spark官网的QueueStream程序设计的程序，每隔1秒创建一个RDD，Streaming每隔2秒就对数据进行处理。<br>
+请登录Linux系统，打开一个终端，进入Shell命令提示符状态，然后执行下面命令新建代码文件：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-bash prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">cd </span><span class="pln">/usr/local/spark/mycode/streaming/ //这个目录在前面章节操作中已经创建好了</span></li><li class="L1"><span class="kwd">vim </span><span class="pln">TestRDDQueueStream.py</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Shell 命令</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>上面用vim编辑器新建了一个TestRDDQueueStream.py文件，请在该文件中输入以下代码：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="kwd">import</span><span class="pln"> time</span></li><li class="L1"><span class="pln">&nbsp;</span></li><li class="L2"><span class="kwd">from</span><span class="pln"> pyspark </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">SparkContext</span></li><li class="L3"><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">streaming </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">StreamingContext</span></li><li class="L4"><span class="pln">&nbsp;</span></li><li class="L5"><span class="kwd">if</span><span class="pln"> __name__ </span><span class="pun">==</span><span class="pln"> </span><span class="str">"__main__"</span><span class="pun">:</span></li><li class="L6"><span class="pln">&nbsp;</span></li><li class="L7"><span class="pln">    sc </span><span class="pun">=</span><span class="pln"> </span><span class="typ">SparkContext</span><span class="pun">(</span><span class="pln">appName</span><span class="pun">=</span><span class="str">"PythonStreamingQueueStream"</span><span class="pun">)</span></li><li class="L8"><span class="pln">    ssc </span><span class="pun">=</span><span class="pln"> </span><span class="typ">StreamingContext</span><span class="pun">(</span><span class="pln">sc</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1</span><span class="pun">)</span></li><li class="L9"><span class="pln">&nbsp;</span></li><li class="L0"><span class="pln">    </span><span class="com"># Create the queue through which RDDs can be pushed to</span></li><li class="L1"><span class="pln">    </span><span class="com"># a QueueInputDStream</span></li><li class="L2"><span class="pln">    rddQueue </span><span class="pun">=</span><span class="pln"> </span><span class="pun">[]</span></li><li class="L3"><span class="pln">    </span><span class="kwd">for</span><span class="pln"> i </span><span class="kwd">in</span><span class="pln"> range</span><span class="pun">(</span><span class="lit">5</span><span class="pun">):</span></li><li class="L4"><span class="pln">        rddQueue </span><span class="pun">+=</span><span class="pln"> </span><span class="pun">[</span><span class="pln">ssc</span><span class="pun">.</span><span class="pln">sparkContext</span><span class="pun">.</span><span class="pln">parallelize</span><span class="pun">([</span><span class="pln">j </span><span class="kwd">for</span><span class="pln"> j </span><span class="kwd">in</span><span class="pln"> range</span><span class="pun">(</span><span class="lit">1</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1001</span><span class="pun">)],</span><span class="pln"> </span><span class="lit">10</span><span class="pun">)]</span></li><li class="L5"><span class="pln">&nbsp;</span></li><li class="L6"><span class="pln">    </span><span class="com"># Create the QueueInputDStream and use it do some processing</span></li><li class="L7"><span class="pln">    inputStream </span><span class="pun">=</span><span class="pln"> ssc</span><span class="pun">.</span><span class="pln">queueStream</span><span class="pun">(</span><span class="pln">rddQueue</span><span class="pun">)</span></li><li class="L8"><span class="pln">    mappedStream </span><span class="pun">=</span><span class="pln"> inputStream</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> x</span><span class="pun">:</span><span class="pln"> </span><span class="pun">(</span><span class="pln">x </span><span class="pun">%</span><span class="pln"> </span><span class="lit">10</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1</span><span class="pun">))</span></li><li class="L9"><span class="pln">    reducedStream </span><span class="pun">=</span><span class="pln"> mappedStream</span><span class="pun">.</span><span class="pln">reduceByKey</span><span class="pun">(</span><span class="kwd">lambda</span><span class="pln"> a</span><span class="pun">,</span><span class="pln"> b</span><span class="pun">:</span><span class="pln"> a </span><span class="pun">+</span><span class="pln"> b</span><span class="pun">)</span></li><li class="L0"><span class="pln">    reducedStream</span><span class="pun">.</span><span class="pln">pprint</span><span class="pun">()</span></li><li class="L1"><span class="pln">&nbsp;</span></li><li class="L2"><span class="pln">    ssc</span><span class="pun">.</span><span class="pln">start</span><span class="pun">()</span></li><li class="L3"><span class="pln">    time</span><span class="pun">.</span><span class="pln">sleep</span><span class="pun">(</span><span class="lit">6</span><span class="pun">)</span></li><li class="L4"><span class="pln">    ssc</span><span class="pun">.</span><span class="pln">stop</span><span class="pun">(</span><span class="pln">stopSparkContext</span><span class="pun">=</span><span class="kwd">True</span><span class="pun">,</span><span class="pln"> stopGraceFully</span><span class="pun">=</span><span class="kwd">True</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>然后执行如下代码：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">python3 </span><span class="pun">./</span><span class="typ">TestRDDQueueStream</span><span class="pun">.</span><span class="pln">py</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>程序就开始运行，就可以看到类似下面的结果：</p>
+<pre><code>-------------------------------------------                                     
+Time: 1479522100000 ms
+-------------------------------------------
+(4,10)
+(0,10)
+(6,10)
+(8,10)
+(2,10)
+(1,10)
+(3,10)
+(7,10)
+(9,10)
+(5,10)
+</code></pre>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1742-2/" title="Spark2.1.0入门：RDD队列流（DStream）(Python版)">http://dblab.xmu.edu.cn/blog/1742-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="5.6Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%20Streaming%E7%AE%80%E4%BB%8B(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2.htmlSpark2.1.0%E5%85%A5%E9%97%A8%EF%BC%9ARDD%E9%98%9F%E5%88%97%E6%B5%81%EF%BC%88DStream%EF%BC%89(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！" style="display: block;"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark 2.1.0 入门：特征抽取 — TF-IDF(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Spark上机练习题：统计微博信息" href="http://dblab.xmu.edu.cn/blog/1765-2/">
+<link rel="next" title="Spark 2.1.0 入门：特征抽取–Word2Vec(Python版)" href="http://dblab.xmu.edu.cn/blog/1768-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1766-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1766-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1766 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1766" class="post-1766 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark 2.1.0 入门：特征抽取 — TF-IDF(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-18T09:59:50+00:00">2017年12月18日</time> <span class="updated">(updated: <time class="updated" datetime="2018-01-08T10:56:16+00:00">2018年1月8日</time>)</span></span><span class="views" id="views"><i class="fa fa-eye"></i> 2873</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p>这一部分我们主要介绍和特征处理相关的算法，大体分为以下三类：</p>
+<p>特征抽取：从原始数据中抽取特征<br>
+特征转换：特征的维度、特征的转化、特征的修改<br>
+特征选取：从大规模特征集中选取一个子集<br>
+<span id="more-1766"></span></p>
+<h1>特征提取</h1>
+<h2>TF-IDF (HashingTF and IDF)</h2>
+<p>“词频－逆向文件频率”（TF-IDF）是一种在文本挖掘中广泛使用的特征向量化方法，它可以体现一个文档中词语在语料库中的重要程度。</p>
+<p>​ 
+词语由t表示，文档由d表示，语料库由D表示。词频TF(t,d)是词语t在文档d中出现的次数。文件频率DF(t,D)是包含词语的文档的个数。如果我
+们只使用词频来衡量重要性，很容易过度强调在文档中经常出现，却没有太多实际信息的词语，比如“a”，“the”以及“of”。如果一个词语经常出现在语
+料库中，意味着它并不能很好的对文档进行区分。TF-IDF就是在数值化文档信息，衡量词语能提供多少信息以区分文档。其定义如下：</p>
+<p>​ 此处  是语料库中总的文档数。公式中使用log函数，当词出现在所有文档中时，它的IDF值变为0。加1是为了避免分母为0的情况。TF-IDF 度量值表示如下：</p>
+<p class="ql-center-displayed-equation" style="line-height: 42px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex_003.svg" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[IDF(t,D) = log \frac{\left| D \right| + 1}{DF(t,D) + 1}\]" title="Rendered by QuickLaTeX.com" width="234" height="42"></p>
+<p>​   此处</p>
+<p class="ql-center-displayed-equation" style="line-height: 18px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex.svg" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[\left| D \right|\]" title="Rendered by QuickLaTeX.com" width="21" height="18"></p>
+<p> 是语料库中总的文档数。公式中使用log函数，当词出现在所有文档中时，它的IDF值变为0。加1是为了避免分母为0的情况。TF-IDF 度量值表示如下：</p>
+<p class="ql-center-displayed-equation" style="line-height: 18px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex_002.svg" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[TFIDF(t,d,D) = TF(t,d) \cdot IDF(t,D)\]" title="Rendered by QuickLaTeX.com" width="307" height="18"></p>
+<p>​ 在Spark ML库中，TF-IDF被分成两部分：TF (+hashing) 和 IDF。</p>
+<p>TF: HashingTF 是一个Transformer，在文本处理中，接收词条的集合然后把这些集合转化成固定长度的特征向量。这个算法在哈希的同时会统计各个词条的词频。</p>
+<p>IDF: IDF是一个Estimator，在一个数据集上应用它的fit（）方法，产生一个IDFModel。 该IDFModel 接收特征向量（由HashingTF产生），然后计算每一个词在文档中出现的频次。IDF会减少那些在语料库中出现频率较高的词的权重。</p>
+<p>​ Spark.mllib 
+中实现词频率统计使用特征hash的方式，原始特征通过hash函数，映射到一个索引值。后面只需要统计这些索引值的频率，就可以知道对应词的频率。这种
+方式避免设计一个全局1对1的词到索引的映射，这个映射在映射大量语料库时需要花费更长的时间。但需要注意，通过hash的方式可能会映射到同一个值的情
+况，即不同的原始特征通过Hash映射后是同一个值。为了降低这种情况出现的概率，我们只能对特征向量升维。i.e., 
+提高hash表的桶数，默认特征维度是 2^20 = 1,048,576.</p>
+<p>在下面的代码段中，我们以一组句子开始。首先使用分解器Tokenizer把句子划分为单个词语。对每一个句子（词袋），我们使用HashingTF将句子转换为特征向量，最后使用IDF重新调整特征向量。这种转换通常可以提高使用文本特征的性能。<br>
+首先，导入TFIDF所需要的包：</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln"> </span><span class="kwd">from</span><span class="pln"> pyspark</span><span class="pun">.</span><span class="pln">ml</span><span class="pun">.</span><span class="pln">feature </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">HashingTF</span><span class="pun">,</span><span class="pln">IDF</span><span class="pun">,</span><span class="typ">Tokenizer</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>准备工作完成后，我们创建一个简单的DataFrame，每一个句子代表一个文档。</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">sentenceData </span><span class="pun">=</span><span class="pln"> spark</span><span class="pun">.</span><span class="pln">createDataFrame</span><span class="pun">([(</span><span class="lit">0</span><span class="pun">,</span><span class="pln"> </span><span class="str">"I heard about Spark and I love Spark"</span><span class="pun">),(</span><span class="lit">0</span><span class="pun">,</span><span class="pln"> </span><span class="str">"I wish Java could use case classes"</span><span class="pun">),(</span><span class="lit">1</span><span class="pun">,</span><span class="pln"> </span><span class="str">"Logistic regression models are neat"</span><span class="pun">)]).</span><span class="pln">toDF</span><span class="pun">(</span><span class="str">"label"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"sentence"</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>在得到文档集合后，即可用tokenizer对句子进行分词</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">tokenizer </span><span class="pun">=</span><span class="pln"> </span><span class="typ">Tokenizer</span><span class="pun">(</span><span class="pln">inputCol</span><span class="pun">=</span><span class="str">"sentence"</span><span class="pun">,</span><span class="pln"> outputCol</span><span class="pun">=</span><span class="str">"words"</span><span class="pun">)</span></li><li class="L1"><span class="pln">wordsData </span><span class="pun">=</span><span class="pln"> tokenizer</span><span class="pun">.</span><span class="pln">transform</span><span class="pun">(</span><span class="pln">sentenceData</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>得到分词后的文档序列后，即可使用HashingTF的transform()方法把句子哈希成特征向量，这里设置哈希表的桶数为2000。</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">hashingTF </span><span class="pun">=</span><span class="pln"> </span><span class="typ">HashingTF</span><span class="pun">(</span><span class="pln">inputCol</span><span class="pun">=</span><span class="str">"words"</span><span class="pun">,</span><span class="pln"> outputCol</span><span class="pun">=</span><span class="str">"rawFeatures"</span><span class="pun">,</span><span class="pln"> numFeatures</span><span class="pun">=</span><span class="lit">20</span><span class="pun">)</span></li><li class="L1"><span class="pln">featurizedData </span><span class="pun">=</span><span class="pln"> hashingTF</span><span class="pun">.</span><span class="pln">transform</span><span class="pun">(</span><span class="pln">wordsData</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>​可以看到，分词序列被变换成一个稀疏特征向量，其中每个单词都被散列成了一个不同的索引值，特征向量在某一维度上的值即该词汇在文档中出现的次数。</p>
+<p>最后，使用IDF来对单纯的词频特征向量进行修正，使其更能体现不同词汇对文本的区别能力，IDF是一个Estimator，调用fit()方法并将词频向量传入，即产生一个IDFModel。</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">idf </span><span class="pun">=</span><span class="pln"> IDF</span><span class="pun">(</span><span class="pln">inputCol</span><span class="pun">=</span><span class="str">"rawFeatures"</span><span class="pun">,</span><span class="pln"> outputCol</span><span class="pun">=</span><span class="str">"features"</span><span class="pun">)</span></li><li class="L1"><span class="pln">idfModel </span><span class="pun">=</span><span class="pln"> idf</span><span class="pun">.</span><span class="pln">fit</span><span class="pun">(</span><span class="pln">featurizedData</span><span class="pun">)</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>很显然，IDFModel是一个Transformer，调用它的transform()方法，即可得到每一个单词对应的TF-IDF度量值。</p>
+<div class="code-pretty-container"><pre class="prettyprint linenums lang-python prettyprinted" style=""><ol class="linenums"><li class="L0"><span class="pln">rescaledData </span><span class="pun">=</span><span class="pln"> idfModel</span><span class="pun">.</span><span class="pln">transform</span><span class="pun">(</span><span class="pln">featurizedData</span><span class="pun">)</span></li><li class="L1"><span class="pln">rescaledData</span><span class="pun">.</span><span class="pln">select</span><span class="pun">(</span><span class="str">"label"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"features"</span><span class="pun">).</span><span class="pln">show</span><span class="pun">()</span></li></ol></pre><div class="code-pretty-toolbar"><span class="title">Python</span><a href="javascript:void(0);" title="复制代码" class="tool clipboard"><i class="fa fa-files-o"></i></a><a href="javascript:void(0);" title="查看纯文本代码" class="tool view-source"><i class="fa fa-code"></i></a><a href="javascript:void(0);" title="返回代码高亮" class="tool back-to-pretty"><i class="fa fa-undo"></i></a><span class="msg"></span></div></div>
+<p>可以看到，特征向量已经被其在语料库中出现的总次数进行了修正，通过TF-IDF得到的特征向量，在接下来可以被应用到相关的机器学习方法中。</p>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1766-2/" title="Spark 2.1.0 入门：特征抽取 — TF-IDF(Python版)">http://dblab.xmu.edu.cn/blog/1766-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="6.3.1Spark%202.1.0%20%E5%85%A5%E9%97%A8%EF%BC%9A%E7%89%B9%E5%BE%81%E6%8A%BD%E5%8F%96%20%E2%80%94%20TF-IDF(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！"><span><i class="fa fa-chevron-up"></i></span></div></body></html>

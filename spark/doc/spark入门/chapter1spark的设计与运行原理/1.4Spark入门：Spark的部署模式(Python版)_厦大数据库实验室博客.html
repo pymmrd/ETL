@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark入门：Spark的部署模式(Python版)_厦大数据库实验室博客</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<link rel="dns-prefetch" href="http://cdn.staticfile.org/">
+<link rel="dns-prefetch" href="http://s.w.org/">
+<link rel="stylesheet" id="yarppWidgetCss-css" href="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/widget.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-quicklatex-format-css" href="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="bootstrap-css" href="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/bootstrap.css" type="text/css" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/font-awesome.css" type="text/css" media="all">
+<link rel="stylesheet" id="power-css" href="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="google-code-prettify-css" href="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.css" type="text/css" media="all">
+<script type="text/javascript" async="" charset="utf-8" src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/core.js"></script><script src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/hm.js"></script><script src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/z_stat.js"></script><script type="text/javascript" src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery_002.js"></script>
+<script type="text/javascript" src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery.js"></script>
+<script type="text/javascript" src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/jquery-migrate.js"></script>
+<script type="text/javascript" src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="http://dblab.xmu.edu.cn/blog/wp-json/">
+<link rel="prev" title="Spark入门：Spark运行架构(Python版)" href="http://dblab.xmu.edu.cn/blog/1711-2/">
+<link rel="next" title="Spark 2.0分布式集群环境搭建(Python版)" href="http://dblab.xmu.edu.cn/blog/1714-2/">
+<link rel="canonical" href="http://dblab.xmu.edu.cn/blog/1713-2/">
+<link rel="alternate" type="application/json+oembed" href="http://dblab.xmu.edu.cn/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fdblab.xmu.edu.cn%2Fblog%2F1713-2%2F">
+<!--[if lt IE 9]>
+<script src="http://dblab.xmu.edu.cn/blog/wp-content/themes/power/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body class="post-template-default single single-post postid-1713 single-format-standard group-blog">
+<div class="container site-page">
+
+<div class="row">
+	<div class="col-sm-3 site-infos">
+		<h4 class="site-title">
+			<a href="http://dblab.xmu.edu.cn/blog/" title="厦大数据库实验室博客" rel="home">厦大数据库实验室博客</a>
+		</h4>
+		<div class="site-description">总结、分享、收获<p><a href="http://dblab.xmu.edu.cn/" title="厦大数据库实验室">实验室主页</a></p></div>
+
+		<nav class="main-navigation" role="navigation">
+			<div class="menu-primary-container"><ul id="menu-primary" class="menu menu-level-1"><li id="menu-item-80" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/">首页</a></li>
+<li id="menu-item-85" class="menu-item item-level-1 current-path"><a href="http://dblab.xmu.edu.cn/blog/category/big-data/">大数据</a></li>
+<li id="menu-item-676" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/databases/">数据库</a></li>
+<li id="menu-item-87" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/data-mining/">数据挖掘</a></li>
+<li id="menu-item-86" class="menu-item item-level-1"><a href="http://dblab.xmu.edu.cn/blog/category/others/">其他</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+		<div class="search"><form role="search" method="get" class="search-form" action="http://dblab.xmu.edu.cn/blog/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input class="search-field" placeholder="搜索…" name="s" type="search">
+				</label>
+				<input class="search-submit" value="搜索" type="submit">
+			</form></div>
+	</div>
+	<div class="col-sm-9 site-main">
+
+					<article id="post-1713" class="post-1713 post type-post status-publish format-standard hentry category-big-data">
+	<header class="entry-header">
+		<h1 class="entry-title">Spark入门：Spark的部署模式(Python版)</h1>
+
+		<div class="entry-meta">
+			<span class="author"><i class="fa fa-user"></i> 阮榕城</span><span class="date"><i class="fa fa-calendar"></i> <time datetime="2017-12-06T11:45:28+00:00">2017年12月6日</time></span><span class="views" id="views"><i class="fa fa-eye"></i> 3196</span>		</div><!-- .entry-meta -->
+	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<div class="bigdata-book">
+			<a href="http://dblab.xmu.edu.cn/post/5899/" title="2019年1月20日寒假大数据师资培训班" target="_blank"><img src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/peixunban2019-01-20.jpg" alt="2019年1月20日寒假大数据师资培训班"></a>
+		</div>
+		<p>【版权声明】博客内容由厦门大学数据库实验室拥有版权，未经允许，请勿转载。版权所有，侵权必究！<br>
+<a href="http://dblab.xmu.edu.cn/blog/1709-2/" target="_blank">返回Spark教程首页</a></p>
+<p>本节首先介绍Spark支持的三种典型集群部署方式，即standalone、Spark on Mesos和Spark on 
+YARN；然后，介绍在企业中是如何具体部署和应用Spark框架的，在企业实际应用环境中，针对不同的应用场景，可以采用不同的部署应用方式，或者采用
+Spark完全替代原有的Hadoop架构，或者采用Spark和Hadoop一起部署的方式。</p>
+<p><span id="more-1713"></span></p>
+<h1>Spark三种部署方式</h1>
+<p>Spark应用程序在集群上部署运行时，可以由不同的组件为其提供资源管理调度服务（资源包括CPU、内存等）。比如，可以使用自带的独立集群管理
+器（standalone），或者使用YARN，也可以使用Mesos。因此，Spark包括三种不同类型的集群部署方式，包括standalone、
+Spark on Mesos和Spark on YARN。<br>
+1.standalone模式<br>
+与MapReduce1.0框架类似，Spark框架本身也自带了完整的资源调度管理服务，可以独立部署到一个集群中，而不需要依赖其他系统来为其提供资
+源管理调度服务。在架构的设计上，Spark与MapReduce1.0完全一致，都是由一个Master和若干个Slave构成，并且以槽（slot）
+作为资源分配单位。不同的是，Spark中的槽不再像MapReduce1.0那样分为Map 
+槽和Reduce槽，而是只设计了统一的一种槽提供给各种任务来使用。<br>
+2.Spark on Mesos模式<br>
+Mesos是一种资源调度管理框架，可以为运行在它上面的Spark提供服务。Spark on 
+Mesos模式中，Spark程序所需要的各种资源，都由Mesos负责调度。由于Mesos和Spark存在一定的血缘关系，因此，Spark这个框架
+在进行设计开发的时候，就充分考虑到了对Mesos的充分支持，因此，相对而言，Spark运行在Mesos上，要比运行在YARN上更加灵活、自然。目
+前，Spark官方推荐采用这种模式，所以，许多公司在实际应用中也采用该模式。<br>
+3. Spark on YARN模式<br>
+Spark可运行于YARN之上，与Hadoop进行统一部署，即“Spark on YARN”，其架构如图9-13所示，资源管理和调度依赖YARN，分布式存储则依赖HDFS。</p>
+<p><img src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-13-Spark-on-Yarn.jpg" alt=""><br>
+图9-13 Spark on YARN架构</p>
+<h1>从“Hadoop+Storm”架构转向Spark架构</h1>
+<p>为了能同时进行批处理与流处理，企业应用中通常会采用“Hadoop+Storm”的架构（也称为Lambda架构）。图9-14给出了采用
+“Hadoop+Storm”部署方式的一个案例，在这种部署架构中，Hadoop和Storm框架部署在资源管理框架YARN（或Mesos）之上，接
+受统一的资源管理和调度，并共享底层的数据存储（HDFS、HBase、Cassandra等）。Hadoop负责对批量历史数据的实时查询和离线分析，
+而Storm则负责对流数据的实时处理。</p>
+<p><img src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-14-HadoopStorm.jpg" alt=""><span class="img-caption"></span></p>
+<p>图9-14 采用“Hadoop+Storm”部署方式的一个案例</p>
+<p>但是，上面这种架构部署较为繁琐。由于Spark同时支持批处理与流处理，因此，对于一些类型的企业应用而言，从“Hadoop+Storm”架构转向Spark架构（如图9-15所示）就成为一种很自然的选择。采用Spark架构具有如下优点：<br>
+*  实现一键式安装和配置、线程级别的任务监控和告警；<br>
+*  降低硬件集群、软件维护、任务监控和应用开发的难度；<br>
+*  便于做成统一的硬件、计算平台资源池。<br>
+需要说明的是，Spark Streaming的原理是将流数据分解成一系列短小的批处理作业，每个短小的批处理作业使用面向批处理的Spark 
+Core进行处理，通过这种方式变相实现流计算，而不是真正实时的流计算，因而通常无法实现毫秒级的响应。因此，对于需要毫秒级实时响应的企业应用而言，
+仍然需要采用流计算框架（如Storm）。</p>
+<p><img src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-15-Spark.jpg" alt=""><br>
+图9-15 用Spark架构同时满足批处理和流处理需求</p>
+<h1>Hadoop和Spark的统一部署</h1>
+<p>一方面，由于Hadoop生态系统中的一些组件所实现的功能，目前还是无法由Spark取代的，比如，Storm可以实现毫秒级响应的流计算，但
+是，Spark则无法做到毫秒级响应。另一方面，企业中已经有许多现有的应用，都是基于现有的Hadoop组件开发的，完全转移到Spark上需要一定的
+成本。因此，在许多企业实际应用中，Hadoop和Spark的统一部署是一种比较现实合理的选择。<br>
+由于Hadoop MapReduce、HBase、Storm和Spark等，都可以运行在资源管理框架YARN之上，因此，可以在YARN之上进行统一部署（如图9-16所示）。这些不同的计算框架统一运行在YARN中，可以带来如下好处：<br>
+*  计算资源按需伸缩；<br>
+*  不用负载应用混搭，集群利用率高；<br>
+*  共享底层存储，避免数据跨集群迁移。</p>
+<p><img src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/9-16-HadoopSpark.jpg" alt=""><br>
+图9-16 Hadoop和Spark的统一部署</p>
+			</div><!-- .entry-content -->
+
+	<footer class="entry-footer">
+		<div class="entry-author">
+			<div class="author-title">本文作者</div>
+			
+		<div class="author-avatar"><img src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/2.jpg" alt="阮榕城" class="avatar avatar-thumbnail wp-user-avatar wp-user-avatar-thumbnail alignnone photo"></div>
+		<div class="author-info">
+			<p class="author-name"><a href="http://dblab.xmu.edu.cn/blog/author/ruanrongcheng/">阮榕城</a></p>
+			<p class="author-desc">磨人的小妖精！</p>
+			<p class="author-contact"><a href="http://www.nekomiao.me/" target="_blank" title="个人主页" class="homepage"><i class="fa fa-home"></i>www.nekomiao.me</a><i class="fa fa-envelope"></i><span class="envelope">moc.qq@crnaur</span></p>
+		</div>
+			</div>
+		<div class="entry-info">
+			<span class="permalink"><i class="fa fa-external-link"></i> <a href="http://dblab.xmu.edu.cn/blog/1713-2/" title="Spark入门：Spark的部署模式(Python版)">http://dblab.xmu.edu.cn/blog/1713-2/</a></span><span class="category"><i class="fa fa-folder-open-o"></i> <a href="http://dblab.xmu.edu.cn/blog/category/big-data/" rel="category tag">大数据</a></span>		</div>
+		<div class="yarpp-related yarpp-related-none">
+</div>
+	</footer><!-- .entry-footer -->
+</article><!-- #post-## -->
+			</div>
+</div><!-- .row -->
+
+	<div class="row">
+		<div class="col-sm-3"></div>
+		<div class="col-sm-9 site-footer">
+			© 2014 <a href="http://dblab.xmu.edu.cn/">厦大数据库实验室</a>
+					</div>
+	</div>
+</div><!-- .container -->
+<link rel="stylesheet" id="yarppRelatedCss-css" href="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/related.css" type="text/css" media="all">
+<script type="text/javascript" src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/prettify.js"></script>
+<script type="text/javascript" src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/power.js"></script>
+<script type="text/javascript" src="1.4Spark%E5%85%A5%E9%97%A8%EF%BC%9ASpark%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F(Python%E7%89%88)_%E5%8E%A6%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E9%AA%8C%E5%AE%A4%E5%8D%9A%E5%AE%A2_files/wp-embed.js"></script>
+
+<div class="back-to-top" id="back-to-top" title="嗖的就上去了！" style="display: block;"><span><i class="fa fa-chevron-up"></i></span></div></body></html>
