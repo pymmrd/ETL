@@ -53,7 +53,12 @@ rdd.keys().collect() # [1, 3, 3]
 rdd.values().collect() #  [2, 4, 6]
 
 # 返回一个根据键排序的RDD
-rdd.sortByKey().collect() # [(1, 2), (3, 4), (3, 6)]
+# 以字符串顺序对整数进行自定义排序
+rdd.sortByKey(
+    ascending=True,
+    numPartitions=None,
+    keyfunc=lambda x: str(x)
+).collect() # [(1, 2), (3, 4), (3, 6)]
 
 # 删除RDD中键与other RDD中的键相同的元素
 rdd.subtactByKey(other_rdd).collect() # [(1, 2)]
