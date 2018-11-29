@@ -11,6 +11,7 @@ conf = (SparkConf()
 sc = SparkContext(conf=conf)
 
 alist = [(1, 2), (3, 4), (3, 6)]
+other = [(3, 9)]
 
 def reducebykey(x, y):
     """
@@ -22,6 +23,9 @@ def reducebykey(x, y):
     return x + y
 
 rdd = sc.parallelize(alist)
+
+other_rdd = sc.parallelize(other)
+
 # 合并具有相同的键
 rdd.reduceBykey(lambda x, y: x+y).collect() # [(1, 2), (3, 10)]
 
@@ -50,4 +54,19 @@ rdd.values().collect() #  [2, 4, 6]
 
 # 返回一个根据键排序的RDD
 rdd.sortByKey().collect() # [(1, 2), (3, 4), (3, 6)]
+
+# 删除RDD中键与other RDD中的键相同的元素
+rdd.subtactByKey(other_rdd).collect() # [(1, 2)]
+
+# 对两个RDD进行内连接
+rdd.join(other_rdd).collect() # [(3, (4, 9)), (3, (6, 9))]
+
+# 对两个RDD进行连接操作，确保第一个RDD的键必须存在
+rdd.rightOuterJoin(other_rdd).collect() # [(3, (4, 9)), (3, (6, 9))]
+
+# 对两个RDD进行连接操作，确保第二哥RDD的键必须存在
+rdd.leftOuterJoin(other_rdd).collect() # [(1, (2, None)), (3, (4, 9)), (3, (6, 9))]
+
+#将两个RDD中拥有相同键的数据分组
+rdd.cogroup(other_rdd).collect() # [(1, ([2], [])), (3, ([4, 6], [9]))]
 
