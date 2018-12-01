@@ -11,7 +11,9 @@ conf = (SparkConf()
 )
 sc = SparkContext(conf=conf)
 file_path = os.path.abspath(os.path.join(
-    os.path.dirname(__file__),
+    os.path.dirname(
+      os.path.dirname(__file__)
+    ),
     'data',
     'README.md'
 ))
