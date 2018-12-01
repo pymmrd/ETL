@@ -1,0 +1,83 @@
+                                        数据分区
+
+    本章要讨论的最后一个 Spark 特性是对数据集在节点间的分区进行控制。在分布式
+程序中, 通信的代价是很大的,因此控制数据分布以获得最少的网络传输可以极大地提升
+整体性能。和单节点的程序需要为记录集合选择合适的数据结构一样,Spark 程序可以通
+过控制RDD 分区方式来减少通信开销。分区并不是对所有应用都有好处的——比如,如果给定
+RDD 只需要被扫描一次,我们完全没有必要对其预先进行分区处理。只有当数据集多次在
+诸如连接这种基于键的操作中使用时,分区才会有帮助。我们会给出一些小例子来说明这
+一点。
+    Spark中所有的键值对RDD都可以进行分区。系统会根据一个针对键的函数对元素
+进行分组。尽管 Spark 没有给出显示控制每个键具体落在哪一个工作节点上的方法(部分
+原因是Spark 即使在某些节点失败时依然可以工作),但 Spark 可以确保同一组的键出现
+在同一个节点上。比如,你可能使用哈希分区将一个 RDD 分成了 100 个分区,此时键的哈
+希值对100 取模的结果相同的记录会被放在一个节点上。你也可以使用范围分区法,将键
+在同一个范围区间内的记录都放在同一个节点上。
+    举个简单的例子,我们分析这样一个应用,它在内存中保存着一张很大的用户信息表——
+也就是一个由(UserID,UserInfo)对组成的RDD,其中UserInfo包含一个该用户所订阅的主题
+的列表。该应用会周期性地将这张表与一个小文件进行组合,这个小文件中存着过去五分钟
+内发生的事件——其实就是一个由(UserID,LinkInfo)对组成的表,存放着过去五分钟内某网
+站各用户的访问情况。例如,我们可能需要对用户访问其未订阅主题的页面的情况进行统计。
+我们可以使用Spark的join()操作来实现这个组合操作,其中需要把UserInfo和LinkInfo的有
+序对根据UserID进行分组。我们的应用如例4-22所示。
+例 4-22: 简单的 Scala 应用
+// 初始化代码;从HDFS商的一个Hadoop SequenceFile中读取用户信息
+// userData中的元素会根据它们被读取时的来源,即HDFS块所在的节点来分布
+// Spark此时无法获知某个特定的UserID对应的记录位于哪个节点上
+val sc = new SparkContext(...)
+val userData = sc.sequenceFile[UserID, UserInfo]("hdfs://...").persist()
+// 周期性调用函数来处理过去五分钟产生的事件日志
+// 假设这是一个包含(UserID, LinkInfo)对的SequenceFile
+def processNewLogs(logFileName: String) {
+    val events = sc.sequenceFile[UserID, LinkInfo](logFileName)
+    val joined = userData.join(events)// RDD of (UserID, (UserInfo, LinkInfo)) pairs
+    val offTopicVisits = joined.filter {
+        case (userId, (userInfo, linkInfo)) => // Expand the tuple into its components
+            !userInfo.topics.contains(linkInfo.topic)
+    }.count()
+    println("Number of visits to non-subscribed topics: " + offTopicVisits)
+}
+    这段代码可以正确运行,但是不够高效。这是因为在每次调用 processNewLogs() 时都会用
+到join()操作,而我们对数据集是如何分区的却一无所知。默认情况下,连接操作会将两个数
+据集中的所有键的哈希值都求出来,将该哈希值相同的记录通过网络传到同一台机器上,然后在
+那台机器上对所有键相同的记录进行连接操作(见图 4-4)。因为 userData 表比每五分钟出现
+的访问日志表 events 要大得多,所以要浪费时间做很多额外工作:在每次调用时都对userData
+表进行哈希值计算和跨节点数据混洗,虽然这些数据从来都不会变化。要解决这一问题也很简单:
+在程序开始时,对userData表使用partitionBy()转化操作,将这张表转为哈希分区。可以通
+过向partitionBy传递一个spark.HashPartitioner对象来实现该操作,如例4-23所示。
+例 4-23:Scala 自定义分区方式
+val sc = new SparkContext(...)
+val userData = sc.sequenceFile[UserID, UserInfo]("hdfs://...").partitionBy(
+    new HashPartitioner(100) // 构造100个分区
+).persist()
+
+    processNewLogs()方法可以保持不变:在processNewLogs()中,eventsRDD是本地变
+量,只在该方法中使用了一次,所以为events指定分区方式没有什么用处。由于在构
+建userData时调用了partitionBy(),Spark就知道了该RDD是根据键的哈希值来分
+区的,这样在调用join()时,Spark就会利用到这一点。具体来说,当调用userData.
+join(events)时,Spark只会对events进行数据混洗操作,将events中特定UserID的记
+录发送到userData的对应分区所在的那台机器上(见图4-5)。这样,需要通过网络传输的
+数据就大大减少了,程序运行速度也可以显著提升了。
+
+    注意,partitionBy()是一个转化操作,因此它的返回值总是一个新的RDD,但它不会改变
+原来的RDD。RDD一旦创建就无法修改。因此应该对partitionBy()的结果进行持久化,
+并保存为userData,而不是原来的sequenceFile()的输出。此外,传给partitionBy()的
+100表示分区数目,它会控制之后对这个RDD进行进一步操作(比如连接操作)时有多少
+任务会并行执行。总的来说,这个值至少应该和集群中的总核心数一样。
+
+    如果没有将 partitionBy() 转化操作的结果持久化,那么后面每次用到这个
+RDD 时都会重复地对数据进行分区操作。不进行持久化会导致整个 RDD 谱
+系图重新求值。那样的话, partitionBy() 带来的好处就会被抵消,导致重
+复对数据进行分区以及跨节点的混洗,和没有指定分区方式时发生的情况十
+分相似。
+    事实上,许多其他Spark操作会自动为结果RDD设定已知的分区方式信息,而且除
+join()外还有很多操作也会利用到已有的分区信息。比如,sortByKey()和groupByKey()
+会分别生成范围分区的RDD和哈希分区的RDD。而另一方面,诸如map()这样的操作会
+导致新的 RDD 失去父 RDD 的分区信息,因为这样的操作理论上可能会修改每条记录的
+键。接下来的几节中,我们会讨论如何获取 RDD 的分区信息,以及数据分区是如何影响
+各种Spark操作的。
+
+    Java 和 Python 中的数据分区
+Spark 的 Java 和 Python 的 API 都和 Scala 的一样,可以从数据分区中获益。
+不过,在 Python 中,你不能将 HashPartitioner 对象传给 partitionBy ,而
+只需要把需要的分区数传递过去(例如 rdd.partitionBy(100) )。
