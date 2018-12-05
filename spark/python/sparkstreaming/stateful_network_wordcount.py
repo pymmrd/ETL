@@ -1,33 +1,50 @@
-#
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# -*- coding:utf-8 -*-
+"""
+    计算网络数据流中单词的个数, 在本地使用步骤
+    (1) $ nc -lk 9999
+    (2) $ bin/spark-submit examples/src/main/python/streaming/stateful_network_wordcount.py \
+        localhost 9999
 
-r"""
- Counts words in UTF8 encoded, '\n' delimited text received from the
- network every second.
+    执行情况：
+    (1) 默认情况, 程序初始化两个单词
+    单词world的updateFunc参数情况:new_values的值[], last_sum的值为1
+    单词hello的updateFunc参数情况:new_values的值为[], last_sum的值为1
+    -------------------------------------------
+    Time: 2018-12-05 21:57:45
+    -------------------------------------------
+    (u'world', 1)
+    (u'hello', 1)
 
- Usage: stateful_network_wordcount.py <hostname> <port>
-   <hostname> and <port> describe the TCP server that Spark Streaming
-    would connect to receive data.
+    (2) nc 输出“hello word"的执行情况，此时输入的hello计算值已经
+    在上一次保存，word为新增单词。所以不重复单词数量为3
 
- To run this on your local machine, you need to first run a Netcat server
-    `$ nc -lk 9999`
- and then run the example
-    `$ bin/spark-submit examples/src/main/python/streaming/stateful_network_wordcount.py \
-        localhost 9999`
+    单词word的updateFunc参数情况:  new_values的值[1], last_sum的值None
+    单词world的updateFunc参数情况: new_values的值[], last_sum的值1
+    单词hello的updateFunc参数情况: new_values的值[1], last_sum的值1
+    -------------------------------------------
+    Time: 2018-12-05 21:57:50
+    -------------------------------------------
+    (u'word', 1)
+    (u'world', 1)
+    (u'hello', 2)
+
+    (3) nc输入"x y z"后的执行情况
+    单词y的updateFunc参数情况: new_values的值[1], last_sum的值None
+    单词word的updateFunc参数情况: new_values的值[], last_sum的值1
+    单词world的updateFunc参数情况: new_values的值[], last_sum的值1
+    单词hello的updateFunc参数情况: new_values的值[], last_sum的值2
+    单词x的updateFunc的参数情况: new_values的值[1], last_sum的值None
+    单词z的updateFunc的参数情况: new_values的值[1], last_sum的值None
+    -------------------------------------------
+    Time: 2018-12-05 21:57:55
+    -------------------------------------------
+    (u'y', 1)
+    (u'word', 1)
+    (u'world', 1)
+    (u'hello', 2)
+    (u'x', 1)
+    (u'z', 1)
+
 """
 from __future__ import print_function
 
@@ -48,7 +65,7 @@ if __name__ == "__main__":
     initialStateRDD = sc.parallelize([(u'hello', 1), (u'world', 1)])
 
     def updateFunc(new_values, last_sum):
-        print (new_values, last_sum)
+        print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', new_values, last_sum)
         return sum(new_values) + (last_sum or 0)
 
     lines = ssc.socketTextStream(sys.argv[1], int(sys.argv[2]))
